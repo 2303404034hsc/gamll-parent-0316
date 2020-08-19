@@ -15,4 +15,6 @@ public interface SpuInfoService {
     IPage<SpuInfo> spuList(Page<SpuInfo> pageParam, String category3Id);
 
     List<BaseSaleAttr> baseSaleAttrList();
+
+    void saveSpuInfo(SpuInfo spuInfo);
 }

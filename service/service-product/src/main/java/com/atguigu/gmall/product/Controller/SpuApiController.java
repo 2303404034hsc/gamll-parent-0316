@@ -8,10 +8,7 @@ import com.atguigu.gmall.product.service.SpuInfoService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -47,5 +44,15 @@ public class SpuApiController {
         List<BaseSaleAttr> baseSaleAttrs = spuInfoService.baseSaleAttrList();
 
         return Result.ok(baseSaleAttrs);
+    }
+
+    //添加 spu
+    //http://api.gmall.com/admin/product/saveSpuInfo
+    @PostMapping("saveSpuInfo")
+    public Result saveSpuInfo(@RequestBody SpuInfo spuInfo) {
+
+        spuInfoService.saveSpuInfo(spuInfo);
+
+        return Result.ok();
     }
 }
