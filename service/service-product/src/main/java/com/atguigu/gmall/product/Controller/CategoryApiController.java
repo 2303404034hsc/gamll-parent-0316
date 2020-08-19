@@ -12,15 +12,20 @@ import java.util.List;
 
 /**
  * @author ccc
- * @create 2020-08-18 20:30
+ * @create 2020-08-19 10:01
  */
 @RestController
 @RequestMapping("admin/product")
 @CrossOrigin
-public class ProductApiController {
+public class CategoryApiController {
 
-    @RequestMapping("testApiController")
-    public String testApiController() {
-        return "testApiController";
+    @Autowired
+    BaseCategoryService baseCategory1Service;
+
+    //一级分类列表
+    @RequestMapping("getCategory1")
+    public Result getCategory1() {
+        List<BaseCategory1> baseCategory1List = baseCategory1Service.getCategory1();
+        return Result.ok(baseCategory1List);
     }
 }
