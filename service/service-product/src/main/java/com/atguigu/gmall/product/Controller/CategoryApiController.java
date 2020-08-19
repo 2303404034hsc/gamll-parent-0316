@@ -2,9 +2,11 @@ package com.atguigu.gmall.product.Controller;
 
 import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.model.product.BaseCategory1;
+import com.atguigu.gmall.model.product.BaseCategory2;
 import com.atguigu.gmall.product.service.BaseCategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,5 +29,13 @@ public class CategoryApiController {
     public Result getCategory1() {
         List<BaseCategory1> baseCategory1List = baseCategory1Service.getCategory1();
         return Result.ok(baseCategory1List);
+    }
+
+    //一级分类列表
+    @RequestMapping("getCategory2/{category1Id}")
+    public Result getCategory2(@PathVariable("category1Id") String category1Id) {
+
+        List<BaseCategory2> baseCategory2List = baseCategory1Service.getCategory2();
+        return Result.ok(baseCategory2List);
     }
 }

@@ -9,5 +9,5 @@ import org.apache.ibatis.annotations.Mapper;
  * @create 2020-08-19 9:57
  */
 @Mapper
-public interface CategoryServiceMapper extends BaseMapper<BaseCategory1> {
+public interface BaseCategory1Mapper extends BaseMapper<BaseCategory1> {
 }
