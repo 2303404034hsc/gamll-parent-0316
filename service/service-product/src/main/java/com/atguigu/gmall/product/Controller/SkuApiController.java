@@ -67,7 +67,21 @@ public class SkuApiController {
         return Result.ok(skuInfoListByPage);
     }
 
+    //5.上架
+    // http://api.gmall.com/admin/product/onSale/{skuId}
+    @RequestMapping("onSale/{skuId}")
+    public Result onSale(@PathVariable("skuId") String skuId) {
+        skuInfoService.onSale(skuId);
+        return Result.ok().message("上架成功");
+    }
 
+    //6.下架
+    // http://api.gmall.com/admin/product/cancelSale/{skuId}
+    @RequestMapping("cancelSale/{skuId}")
+    public Result cancelSale(@PathVariable("skuId") String skuId) {
+        skuInfoService.cancelSale(skuId);
+        return Result.ok().message("下架成功");
+    }
 
 
 

@@ -33,4 +33,22 @@ public class SkuInfoServiceImpl implements SkuInfoService {
         IPage<SkuInfo> skuInfoIPage = skuInfoMapper.selectPage(pageParam,null);
         return skuInfoIPage;
     }
+
+    @Override
+    public void onSale(String skuId) {
+        QueryWrapper<SkuInfo> skuInfoQueryWrapper = new QueryWrapper<>();
+        skuInfoQueryWrapper.eq("id",skuId);
+        SkuInfo skuInfo = skuInfoMapper.selectOne(skuInfoQueryWrapper);
+        skuInfo.setIsSale(1);
+        skuInfoMapper.updateById(skuInfo);
+    }
+
+    @Override
+    public void cancelSale(String skuId) {
+        QueryWrapper<SkuInfo> skuInfoQueryWrapper = new QueryWrapper<>();
+        skuInfoQueryWrapper.eq("id",skuId);
+        SkuInfo skuInfo = skuInfoMapper.selectOne(skuInfoQueryWrapper);
+        skuInfo.setIsSale(0);
+        skuInfoMapper.updateById(skuInfo);
+    }
 }

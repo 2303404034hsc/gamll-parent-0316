@@ -13,4 +13,8 @@ public interface SkuInfoService {
     void saveSkuInfo(SkuInfo skuInfo);
 
     IPage<SkuInfo> getSkuInfoListByPage(Page<SkuInfo> pageParam);
+
+    void onSale(String skuId);
+
+    void cancelSale(String skuId);
 }

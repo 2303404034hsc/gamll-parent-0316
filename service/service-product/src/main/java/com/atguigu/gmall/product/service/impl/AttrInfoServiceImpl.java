@@ -26,10 +26,19 @@ public class AttrInfoServiceImpl implements AttrInfoService {
 
     @Override
     public List<BaseAttrInfo> attrInfoList(String category1Id, String category2Id, String category3Id) {
-        QueryWrapper<BaseAttrInfo> baseAttrInfoWrapper = new QueryWrapper<>();
-        baseAttrInfoWrapper.eq("category_id",category3Id);
-        baseAttrInfoWrapper.eq("category_level",3);
-        List<BaseAttrInfo> baseAttrInfos = attrInfoMapper.selectList(baseAttrInfoWrapper);
+        QueryWrapper<BaseAttrInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("category_level",3);
+        queryWrapper.eq("category_id",category3Id);
+        List<BaseAttrInfo> baseAttrInfos = attrInfoMapper.selectList(queryWrapper);
+        //属性值集合
+        for (BaseAttrInfo baseAttrInfo : baseAttrInfos) {
+            Long attrId = baseAttrInfo.getId();
+
+            QueryWrapper<BaseAttrValue> queryWrapperValue = new QueryWrapper<>();
+            queryWrapperValue.eq("attr_id",attrId);
+            List<BaseAttrValue> baseAttrInfoValues = attrValueMapper.selectList(queryWrapperValue);
+            baseAttrInfo.setAttrValueList(baseAttrInfoValues);
+        }
         return baseAttrInfos;
     }
 
