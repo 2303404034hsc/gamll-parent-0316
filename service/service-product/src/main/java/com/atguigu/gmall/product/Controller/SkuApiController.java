@@ -5,6 +5,8 @@ import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.service.SkuInfoService;
 import com.atguigu.gmall.product.service.SpuImageService;
 import com.atguigu.gmall.product.service.SpuSaleAttrService;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -54,4 +56,19 @@ public class SkuApiController {
         skuInfoService.saveSkuInfo(skuInfo);
         return Result.ok();
     }
+
+
+    //4.获取sku分页列表
+    // http://api.gmall.com/admin/product/list/{page}/{limit}
+    @RequestMapping("list/{page}/{limit}")
+    public Result getSkuInfoListByPage(@PathVariable("page") Long page,@PathVariable("limit") Long limit) {
+        Page<SkuInfo> pageParam = new Page<>(page,limit);
+        IPage<SkuInfo> skuInfoListByPage = skuInfoService.getSkuInfoListByPage(pageParam);
+        return Result.ok(skuInfoListByPage);
+    }
+
+
+
+
+
 }
