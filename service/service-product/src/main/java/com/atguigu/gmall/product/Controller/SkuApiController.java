@@ -1,17 +1,12 @@
 package com.atguigu.gmall.product.Controller;
 
 import com.atguigu.gmall.common.result.Result;
-import com.atguigu.gmall.model.product.BaseSaleAttr;
-import com.atguigu.gmall.model.product.SpuImage;
-import com.atguigu.gmall.model.product.SpuSaleAttr;
-import com.atguigu.gmall.model.product.SpuSaleAttrValue;
+import com.atguigu.gmall.model.product.*;
+import com.atguigu.gmall.product.service.SkuInfoService;
 import com.atguigu.gmall.product.service.SpuImageService;
 import com.atguigu.gmall.product.service.SpuSaleAttrService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -30,6 +25,9 @@ public class SkuApiController {
     @Autowired
     SpuSaleAttrService spuSaleAttrService;
 
+    @Autowired
+    SkuInfoService skuInfoService;
+
     //根据spuId获取图片列表
     //http://api.gmall.com/admin/product/spuImageList/{spuId}
     @RequestMapping("spuImageList/{spuId}")
@@ -47,5 +45,13 @@ public class SkuApiController {
         List<SpuSaleAttr> spuSaleAttrs = spuSaleAttrService.spuSaleAttrList(spuId);
 
         return Result.ok(spuSaleAttrs);
+    }
+
+    //添加sku
+    //http://api.gmall.com/admin/product/saveSkuInfo
+    public Result saveSkuInfo(@RequestBody SkuInfo skuInfo) {
+
+        skuInfoService.saveSkuInfo(skuInfo);
+        return Result.ok();
     }
 }
