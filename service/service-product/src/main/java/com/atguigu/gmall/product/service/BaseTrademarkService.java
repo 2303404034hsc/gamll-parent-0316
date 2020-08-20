@@ -14,4 +14,12 @@ public interface BaseTrademarkService {
     List<BaseTrademark> getTrademarkList();
 
     IPage<BaseTrademark> getTrademarkListPage(Page<BaseTrademark> pageParam);
+
+    BaseTrademark getById(String trademarkId);
+
+    void save(BaseTrademark trademark);
+
+    void update(BaseTrademark trademark);
+
+    void removeById(Long trademarkId);
 }
