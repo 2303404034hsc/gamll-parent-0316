@@ -30,4 +30,24 @@ public class BaseTrademarkServiceImpl implements BaseTrademarkService {
 
         return trademarkMapper.selectPage(pageParam,null);
     }
+
+    @Override
+    public BaseTrademark getById(String trademarkId) {
+        return trademarkMapper.selectById(trademarkId);
+    }
+
+    @Override
+    public void save(BaseTrademark trademark) {
+        trademarkMapper.insert(trademark);
+    }
+
+    @Override
+    public void update(BaseTrademark trademark) {
+        trademarkMapper.updateById(trademark);
+    }
+
+    @Override
+    public void removeById(Long trademarkId) {
+        trademarkMapper.deleteById(trademarkId);
+    }
 }
