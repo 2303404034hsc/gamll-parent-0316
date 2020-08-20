@@ -1,9 +1,10 @@
 package com.atguigu.gmall.product.service.impl;
 
-import com.atguigu.gmall.model.product.BaseTrademark;
-import com.atguigu.gmall.model.product.SkuInfo;
-import com.atguigu.gmall.model.product.SpuInfo;
+import com.atguigu.gmall.model.product.*;
+import com.atguigu.gmall.product.mapper.SkuAttrValueMapper;
+import com.atguigu.gmall.product.mapper.SkuImageMapper;
 import com.atguigu.gmall.product.mapper.SkuInfoMapper;
+import com.atguigu.gmall.product.mapper.SkuSaleAttrValueMapper;
 import com.atguigu.gmall.product.service.SkuInfoService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -22,9 +23,50 @@ public class SkuInfoServiceImpl implements SkuInfoService {
     @Autowired
     SkuInfoMapper skuInfoMapper;
 
+    @Autowired
+    SkuAttrValueMapper skuAttrValueMapper;
+
+    @Autowired
+    SkuSaleAttrValueMapper skuSaleAttrValueMapper;
+
+    @Autowired
+    SkuImageMapper skuImageMapper;
+
 
     @Override
     public void saveSkuInfo(SkuInfo skuInfo) {
+
+        //skuInfo表的保存
+        skuInfoMapper.insert(skuInfo);
+        Long skuId = skuInfo.getId();
+        Long spuId = skuInfo.getSpuId();
+        //sku_attr_value的保存
+        List<SkuAttrValue> skuAttrValueList = skuInfo.getSkuAttrValueList();
+        if(null != skuAttrValueList){
+            for (SkuAttrValue skuAttrValue : skuAttrValueList) {
+                skuAttrValue.setSkuId(skuId);
+                skuAttrValueMapper.insert(skuAttrValue);
+            }
+        }
+
+        //sku_sale_attr_value的保存
+        List<SkuSaleAttrValue> skuSaleAttrValueList = skuInfo.getSkuSaleAttrValueList();
+        if(null != skuAttrValueList){
+            for (SkuSaleAttrValue skuSaleAttrValue : skuSaleAttrValueList) {
+                skuSaleAttrValue.setSkuId(skuId);
+                skuSaleAttrValue.setSpuId(spuId);
+                skuSaleAttrValueMapper.insert(skuSaleAttrValue);
+            }
+        }
+
+        //sku_image的保存
+        List<SkuImage> skuImageList = skuInfo.getSkuImageList();
+        if(null != skuImageList){
+            for (SkuImage skuImage : skuImageList) {
+                skuImage.setSkuId(skuId);
+                skuImageMapper.insert(skuImage);
+            }
+        }
 
     }
 

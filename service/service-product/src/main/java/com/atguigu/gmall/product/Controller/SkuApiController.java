@@ -51,6 +51,7 @@ public class SkuApiController {
 
     //添加sku
     //http://api.gmall.com/admin/product/saveSkuInfo
+    @RequestMapping("saveSkuInfo")
     public Result saveSkuInfo(@RequestBody SkuInfo skuInfo) {
 
         skuInfoService.saveSkuInfo(skuInfo);
@@ -82,7 +83,5 @@ public class SkuApiController {
         skuInfoService.cancelSale(skuId);
         return Result.ok().message("下架成功");
     }
-
-
 
 }
