@@ -39,6 +39,7 @@ public class BaseTrademarkServiceImpl implements BaseTrademarkService {
     @Override
     public void save(BaseTrademark trademark) {
         trademarkMapper.insert(trademark);
+
     }
 
     @Override

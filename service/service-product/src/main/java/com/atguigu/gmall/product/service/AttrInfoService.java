@@ -15,4 +15,6 @@ public interface AttrInfoService {
     void saveAttrInfo(BaseAttrInfo baseAttrInfo);
 
     List<BaseAttrValue> getAttrValueList(String attrId);
+
+    void deleteAttrInfo(Long attrValueId);
 }

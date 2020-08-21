@@ -76,4 +76,9 @@ public class AttrInfoServiceImpl implements AttrInfoService {
         List<BaseAttrValue> baseAttrValues = attrValueMapper.selectList(baseAttrValueWrapper);
         return baseAttrValues;
     }
+
+    @Override
+    public void deleteAttrInfo(Long attrValueId) {
+        attrValueMapper.deleteById(attrValueId);
+    }
 }

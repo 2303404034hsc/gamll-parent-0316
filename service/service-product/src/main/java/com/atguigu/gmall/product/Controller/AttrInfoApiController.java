@@ -35,7 +35,6 @@ public class AttrInfoApiController {
     @RequestMapping("saveAttrInfo")
     public Result saveAttrInfo(@RequestBody BaseAttrInfo baseAttrInfo) {
 
-        attrInfoService.saveAttrInfo(baseAttrInfo);
         return Result.ok();
     }
 
@@ -47,4 +46,15 @@ public class AttrInfoApiController {
         List<BaseAttrValue> baseAttrValues = attrInfoService.getAttrValueList(attrId);
         return Result.ok(baseAttrValues);
     }
+
+    //删除平台属性值
+    //url: '/admin/product/deleteAttrInfo/' + attrValueId,
+    @DeleteMapping("deleteAttrInfo/{attrValueId}")
+    public Result deleteAttrInfo(@PathVariable("attrValueId") Long attrValueId) {
+
+        attrInfoService.deleteAttrInfo(attrValueId);
+
+        return Result.ok();
+    }
+
 }
