@@ -93,4 +93,16 @@ public class SkuInfoServiceImpl implements SkuInfoService {
         skuInfo.setIsSale(0);
         skuInfoMapper.updateById(skuInfo);
     }
+
+    @Override
+    public SkuInfo getSkuInfo(String skuId) {
+        //查询基本表信息
+        SkuInfo skuInfo = skuInfoMapper.selectById(skuId);
+        //封装图片信息
+        QueryWrapper<SkuImage> skuImageWrapper = new QueryWrapper<>();
+        skuImageWrapper.eq("sku_id",skuId);
+        List<SkuImage> skuImages = skuImageMapper.selectList(skuImageWrapper);
+        skuInfo.setSkuImageList(skuImages);
+        return skuInfo;
+    }
 }

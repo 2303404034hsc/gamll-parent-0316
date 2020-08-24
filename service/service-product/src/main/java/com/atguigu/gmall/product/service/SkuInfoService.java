@@ -17,4 +17,6 @@ public interface SkuInfoService {
     void onSale(String skuId);
 
     void cancelSale(String skuId);
+
+    SkuInfo getSkuInfo(String skuId);
 }
