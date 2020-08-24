@@ -8,6 +8,7 @@
         <module>model</module>
         <module>service</module>
         <module>web</module>
+        <module>service-client</module>
     </modules>
 
     <parent>
