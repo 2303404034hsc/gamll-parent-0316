@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -104,5 +105,11 @@ public class SkuInfoServiceImpl implements SkuInfoService {
         List<SkuImage> skuImages = skuImageMapper.selectList(skuImageWrapper);
         skuInfo.setSkuImageList(skuImages);
         return skuInfo;
+    }
+
+    @Override
+    public BigDecimal getSkuPrice(String skuId) {
+        SkuInfo skuInfo = skuInfoMapper.selectById(skuId);
+        return skuInfo.getPrice();
     }
 }

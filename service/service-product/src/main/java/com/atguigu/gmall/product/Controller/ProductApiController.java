@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -36,4 +37,12 @@ public class ProductApiController {
         SkuInfo skuInfo = skuInfoService.getSkuInfo(skuId);
         return skuInfo;
     }
+
+    @RequestMapping("inner/getSkuPrice/{skuId}")
+    BigDecimal getSkuPrice(@PathVariable("skuId") String skuId){
+        BigDecimal price = skuInfoService.getSkuPrice(skuId);
+        return price;
+    }
+
+
 }
