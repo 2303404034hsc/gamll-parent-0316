@@ -14,14 +14,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import springfox.documentation.spring.web.json.Json;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -118,53 +116,57 @@ public class SkuInfoServiceImpl implements SkuInfoService {
         //查询缓存
         String skuStrFromCache = (String) redisTemplate.opsForValue().get("sku:" + skuId + ":info");
 
-        if(StringUtils.isBlank(skuStrFromCache)){
-            //分布式缓存锁
-            //
+        if (StringUtils.isBlank(skuStrFromCache)) {
 
             String lockId = UUID.randomUUID().toString();
-            Boolean lock = redisTemplate.opsForValue().setIfAbsent("sku:" + skuId + ":lock", lockId, 10, TimeUnit.SECONDS);
-            if(lock){
+
+            //分布式缓存锁
+            //
+            Boolean lock = redisTemplate.opsForValue().setIfAbsent("sku:" + skuId + ":lock", 1, 10, TimeUnit.SECONDS);
+            if (lock) {
                 //查询db
                 skuInfo = getSkuInfoFromDb(skuId);
 
                 System.out.println(Thread.currentThread().getName() + "拿到分布式锁");
 
                 //同步缓存
-                if(null != skuInfo){
+                if (null != skuInfo) {
                     redisTemplate.opsForValue().set("sku:" + skuId + ":info", JSON.toJSONString(skuInfo));
-                }else{
+                } else {
                     //在缓存添加一个空值 10秒后过期
-                    redisTemplate.opsForValue().set("sku:" + skuId + ":info", JSON.toJSONString(new SkuInfo()),10,TimeUnit.SECONDS);
+                    redisTemplate.opsForValue().set("sku:" + skuId + ":info", JSON.toJSONString(new SkuInfo()), 10, TimeUnit.SECONDS);
                 }
-//                try {
-//                    Thread.sleep(5000);
-//                }catch (Exception e){
-//                    e.printStackTrace();
-//                }
                 //自己线程操作完毕 归还分布式锁
-                //删除本线程的锁
-                String lockIdFromCache =  (String)redisTemplate.opsForValue().get("sku:" + skuId +":lock");
-                if(StringUtils.isNotBlank(lockIdFromCache) && lockIdFromCache.equals(lockId)){
-                    redisTemplate.delete("sku:" + skuId + ":lock");
-                }
+                //删除本线程的锁 解决方案一 按照 redis的v值作为锁的删除id
+//                String lockIdFromCache = (String) redisTemplate.opsForValue().get("sku:" + skuId + ":lock");
+//                if (StringUtils.isNotBlank(lockIdFromCache) && lockIdFromCache.equals(lockId)) {
+//                    redisTemplate.delete("sku:" + skuId + ":lock");
+//                }
 
                 //使用LUA脚本删除锁
+                String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+                // 设置lua脚本返回的数据类型
+                DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
+                // 设置lua脚本返回类型为Long
+                redisScript.setResultType(Long.class);
+                redisScript.setScriptText(script);
+                redisTemplate.execute(redisScript, Arrays.asList("lock"), lockId);
+
 
                 System.out.println(Thread.currentThread().getName() + "归还分布式锁");
-            }else{
+            } else {
                 // 自旋
                 System.out.println(Thread.currentThread().getName() + "没有获得分布式锁，开始自旋");
                 try {
                     Thread.sleep(3000);
-                }catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
-                return  getSkuInfo(skuId);
+                return getSkuInfo(skuId);
             }
-        }else{
+        } else {
             //缓存中有，直接解析
-            skuInfo = JSON.parseObject(skuStrFromCache,SkuInfo.class);
+            skuInfo = JSON.parseObject(skuStrFromCache, SkuInfo.class);
         }
 
         return skuInfo;
