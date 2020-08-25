@@ -13,7 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author ccc
@@ -112,4 +114,17 @@ public class SkuInfoServiceImpl implements SkuInfoService {
         SkuInfo skuInfo = skuInfoMapper.selectById(skuId);
         return skuInfo.getPrice();
     }
+
+    @Override
+    public Map<String, String> getSkuValueIdsMap(Long spuId) {
+        List<Map<String,Object>> resultMapList =  skuSaleAttrValueMapper.selectSkuValueIdsMap(spuId);
+        Map<String,String> valueIdsMap = new HashMap<>();
+        for (Map<String, Object> map : resultMapList) {
+            String skuId = map.get("sku_id").toString();
+            String valueId = map.get("value_ids").toString();
+            valueIdsMap.put(valueId,skuId);
+        }
+        return valueIdsMap;
+    }
+
 }

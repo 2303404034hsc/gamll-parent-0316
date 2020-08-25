@@ -1,14 +1,20 @@
 package com.atguigu.gmall.item.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall.item.service.ItemService;
 import com.atguigu.gmall.model.product.BaseCategoryView;
 import com.atguigu.gmall.model.product.SkuInfo;
+import com.atguigu.gmall.model.product.SpuSaleAttr;
 import com.atguigu.gmall.product.client.ProductFeignClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import springfox.documentation.spring.web.json.Json;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -41,7 +47,12 @@ public class ItemServiceImpl implements ItemService {
         map.put("categoryView",baseCategoryView);
 
         //查询销售属性
+        List<SpuSaleAttr> spuSaleAttrs = productFeignClient.getMySpuSaleAttrs(skuInfo.getSpuId(),skuId);
+        map.put("spuSaleAttrList",spuSaleAttrs);
 
+        //销售属性对应sku的hash表
+        Map<String,String> valueIdsMap = productFeignClient.getSkuValueIdsMap(skuInfo.getSpuId());
+        map.put("valuesSkuJson", JSON.toJSONString(valueIdsMap));
 
         return map;
     }

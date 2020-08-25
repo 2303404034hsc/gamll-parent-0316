@@ -36,7 +36,7 @@ public class SpuInfoServiceImpl implements SpuInfoService {
     @Override
     public IPage<SpuInfo> spuList(Page<SpuInfo> pageParam, String category3Id) {
         QueryWrapper<SpuInfo> spuInfoWrapper = new QueryWrapper<>();
-        spuInfoWrapper.eq("category3_id",category3Id);
+        spuInfoWrapper.eq("category3_id", category3Id);
         IPage<SpuInfo> spuInfoIPage = spuInfoMapper.selectPage(pageParam, spuInfoWrapper);
         return spuInfoIPage;
     }
@@ -56,7 +56,7 @@ public class SpuInfoServiceImpl implements SpuInfoService {
         Long spuId = spuInfo.getId();
 
         List<SpuImage> spuImageList = spuInfo.getSpuImageList();
-        if(null != spuImageList){
+        if (null != spuImageList) {
             for (SpuImage spuImage : spuImageList) {
                 //2、保存spuImage表(没有fdfs暂时为空
                 spuImage.setSpuId(spuId);
@@ -65,7 +65,7 @@ public class SpuInfoServiceImpl implements SpuInfoService {
         }
 
         List<SpuSaleAttr> spuSaleAttrList = spuInfo.getSpuSaleAttrList();
-        if(null != spuSaleAttrList){
+        if (null != spuSaleAttrList) {
             for (SpuSaleAttr spuSaleAttr : spuSaleAttrList) {
                 //3、保存spu_sale_attr表
                 spuSaleAttr.setSpuId(spuId);
@@ -73,7 +73,7 @@ public class SpuInfoServiceImpl implements SpuInfoService {
 
                 //4、保存spu_sale_value表
                 List<SpuSaleAttrValue> spuSaleAttrValueList = spuSaleAttr.getSpuSaleAttrValueList();
-                if(null != spuSaleAttrValueList){
+                if (null != spuSaleAttrValueList) {
                     for (SpuSaleAttrValue spuSaleAttrValue : spuSaleAttrValueList) {
                         spuSaleAttrValue.setBaseSaleAttrId(spuSaleAttr.getBaseSaleAttrId());
                         spuSaleAttrValue.setSpuId(spuId);
@@ -84,10 +84,11 @@ public class SpuInfoServiceImpl implements SpuInfoService {
             }
         }
 
+    }
 
-
-
-
-
+    @Override
+    public List<SpuSaleAttr> getSpuSaleAttrListCheckBySku(Long spuId, String skuId) {
+        List<SpuSaleAttr> spuSaleAttrs = spuSaleAttrMapper.selectSpuSaleAttrListCheckBySku(spuId,skuId);
+        return spuSaleAttrs;
     }
 }
