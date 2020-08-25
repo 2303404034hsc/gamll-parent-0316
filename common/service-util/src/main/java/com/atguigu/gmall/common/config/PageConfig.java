@@ -1,4 +1,4 @@
-package com.atguigu.gmall.config;
+package com.atguigu.gmall.common.config;
 
 import com.baomidou.mybatisplus.extension.plugins.PaginationInterceptor;
 import org.springframework.context.annotation.Bean;

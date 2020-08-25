@@ -1,6 +1,7 @@
 package com.atguigu.gmall.product.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.atguigu.gmall.common.cache.GmallCache;
 import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.mapper.SkuAttrValueMapper;
 import com.atguigu.gmall.product.mapper.SkuImageMapper;
@@ -106,8 +107,24 @@ public class SkuInfoServiceImpl implements SkuInfoService {
     }
 
     //获取商品详情
+    @GmallCache
     @Override
     public SkuInfo getSkuInfo(String skuId) {
+
+        SkuInfo skuInfo = new SkuInfo();
+
+        System.out.println("执行被代理的方法");
+
+        // 查询db
+        skuInfo = getSkuInfoFromDb(skuId);
+
+        return skuInfo;
+    }
+
+    //获取商品详情
+//    @Override
+    public SkuInfo getSkuInfoForCache(String skuId) {
+
 
         System.out.println(Thread.currentThread().getName() + "申请详情");
 
@@ -115,15 +132,16 @@ public class SkuInfoServiceImpl implements SkuInfoService {
 
         //查询缓存
         String skuStrFromCache = (String) redisTemplate.opsForValue().get("sku:" + skuId + ":info");
+        String lockId = UUID.randomUUID().toString();
 
         if (StringUtils.isBlank(skuStrFromCache)) {
 
-            String lockId = UUID.randomUUID().toString();
 
             //分布式缓存锁
-            //
-            Boolean lock = redisTemplate.opsForValue().setIfAbsent("sku:" + skuId + ":lock", 1, 10, TimeUnit.SECONDS);
+            //redis里面的 setnx 只有当键不存在时才会返回成功
+            Boolean lock = redisTemplate.opsForValue().setIfAbsent("sku:" + skuId + ":lock", lockId, 100, TimeUnit.SECONDS);
             if (lock) {
+
                 //查询db
                 skuInfo = getSkuInfoFromDb(skuId);
 
@@ -143,16 +161,15 @@ public class SkuInfoServiceImpl implements SkuInfoService {
 //                    redisTemplate.delete("sku:" + skuId + ":lock");
 //                }
 
-                //使用LUA脚本删除锁
+                //使用LUA脚本删除锁 解决方案二
                 String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
                 // 设置lua脚本返回的数据类型
                 DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
                 // 设置lua脚本返回类型为Long
                 redisScript.setResultType(Long.class);
                 redisScript.setScriptText(script);
-                redisTemplate.execute(redisScript, Arrays.asList("lock"), lockId);
-
-
+                //
+                redisTemplate.execute(redisScript, Arrays.asList("sku:" + skuId + ":lock"), lockId);
                 System.out.println(Thread.currentThread().getName() + "归还分布式锁");
             } else {
                 // 自旋
