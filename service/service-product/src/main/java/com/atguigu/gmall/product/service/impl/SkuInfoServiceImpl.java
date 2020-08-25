@@ -107,13 +107,11 @@ public class SkuInfoServiceImpl implements SkuInfoService {
     }
 
     //获取商品详情
-    @GmallCache
+    @GmallCache //该注解是标注需要进行aop处理的缓存方法
     @Override
     public SkuInfo getSkuInfo(String skuId) {
 
         SkuInfo skuInfo = new SkuInfo();
-
-        System.out.println("执行被代理的方法");
 
         // 查询db
         skuInfo = getSkuInfoFromDb(skuId);
