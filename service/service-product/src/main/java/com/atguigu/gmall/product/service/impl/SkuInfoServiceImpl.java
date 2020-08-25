@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -120,7 +121,9 @@ public class SkuInfoServiceImpl implements SkuInfoService {
         if(StringUtils.isBlank(skuStrFromCache)){
             //分布式缓存锁
             //
-            Boolean lock = redisTemplate.opsForValue().setIfAbsent("sku:" + skuId + ":lock", 1, 10, TimeUnit.SECONDS);
+
+            String lockId = UUID.randomUUID().toString();
+            Boolean lock = redisTemplate.opsForValue().setIfAbsent("sku:" + skuId + ":lock", lockId, 10, TimeUnit.SECONDS);
             if(lock){
                 //查询db
                 skuInfo = getSkuInfoFromDb(skuId);
@@ -140,7 +143,13 @@ public class SkuInfoServiceImpl implements SkuInfoService {
 //                    e.printStackTrace();
 //                }
                 //自己线程操作完毕 归还分布式锁
-                redisTemplate.delete("sku:" + skuId + ":lock");
+                //删除本线程的锁
+                String lockIdFromCache =  (String)redisTemplate.opsForValue().get("sku:" + skuId +":lock");
+                if(StringUtils.isNotBlank(lockIdFromCache) && lockIdFromCache.equals(lockId)){
+                    redisTemplate.delete("sku:" + skuId + ":lock");
+                }
+
+                //使用LUA脚本删除锁
 
                 System.out.println(Thread.currentThread().getName() + "归还分布式锁");
             }else{
