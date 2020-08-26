@@ -107,7 +107,7 @@ public class GmallCacheAspect {
      * @param signature 可以获取到方法的返回值
      * @param key       需要获取数据使用
      * @param count     自旋上限
-     * @param isHit     判断该
+     * @param isHit     判断该方法是查询缓存还是进入自旋状态，也可以不要
      * @return
      */
     private Object cacheHit(MethodSignature signature, String key, Integer count, boolean isHit) {

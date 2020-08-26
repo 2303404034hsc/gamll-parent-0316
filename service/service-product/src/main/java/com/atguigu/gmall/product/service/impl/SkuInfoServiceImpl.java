@@ -120,7 +120,6 @@ public class SkuInfoServiceImpl implements SkuInfoService {
     }
 
     //获取商品详情
-//    @Override
     public SkuInfo getSkuInfoForCache(String skuId) {
 
 
