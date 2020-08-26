@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author ccc
@@ -20,7 +21,6 @@ public class ItemApiController {
 
     @Autowired
     ItemService itemService;
-
 
     @RequestMapping("api/item/{skuId}")
     Result getItem(@PathVariable("skuId") String skuId){
