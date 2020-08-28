@@ -1,5 +1,6 @@
 package com.atguigu.gmall.product.Controller;
 
+import com.alibaba.fastjson.JSONObject;
 import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.model.product.BaseCategory1;
 import com.atguigu.gmall.model.product.BaseCategoryView;
@@ -9,10 +10,7 @@ import com.atguigu.gmall.product.service.BaseCategoryService;
 import com.atguigu.gmall.product.service.SkuInfoService;
 import com.atguigu.gmall.product.service.SpuInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -72,6 +70,14 @@ public class ProductApiController {
     Map<String, String> getSkuValueIdsMap(@PathVariable("spuId") Long spuId){
         Map<String,String> valueIdsMap = skuInfoService.getSkuValueIdsMap(spuId);
         return valueIdsMap;
+    }
+
+    @GetMapping("getBaseCategoryList")
+    Result getBaseCategoryList(){
+
+        List<JSONObject> jsonObjects =  baseCategoryService.getBaseCategoryList();
+
+        return Result.ok(jsonObjects);
     }
 
 

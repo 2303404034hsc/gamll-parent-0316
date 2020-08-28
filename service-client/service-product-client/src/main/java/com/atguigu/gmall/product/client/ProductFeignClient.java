@@ -1,9 +1,11 @@
 package com.atguigu.gmall.product.client;
 
+import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.model.product.BaseCategoryView;
 import com.atguigu.gmall.model.product.SkuInfo;
 import com.atguigu.gmall.model.product.SpuSaleAttr;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -32,4 +34,8 @@ public interface ProductFeignClient {
 
     @RequestMapping("api/product/inner/getSkuValueIdsMap/{spuId}")
     Map<String, String> getSkuValueIdsMap(@PathVariable("spuId") Long spuId);
+
+    @GetMapping("/api/product/getBaseCategoryList")
+    Result getBaseCategoryList();
+
 }
