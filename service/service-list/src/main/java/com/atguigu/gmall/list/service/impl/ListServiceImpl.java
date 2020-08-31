@@ -13,9 +13,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -34,12 +39,103 @@ public class ListServiceImpl implements ListService {
     @Autowired
     RedisTemplate redisTemplate;
 
+    @Autowired
+    ThreadPoolExecutor threadPoolExecutor;
+
 
     @Override
     public void onSale(String skuId) {
+        //优化前版本
+//        onSale_bak(skuId);
+        //可以使用多线程优化
+        onSale_thread(skuId);
 
-        //可以同多线程优化
+    }
+    private void onSale_thread(String skuId) {
+        long start = System.currentTimeMillis();
+        Goods goods = new Goods();
 
+        //skuInfo查询 需要返回值 所以用 supply
+        CompletableFuture<SkuInfo> completableFutureSkuInfo = CompletableFuture.supplyAsync(new Supplier<SkuInfo>() {
+            @Override
+            public SkuInfo get() {
+                //查询skuInfo
+                SkuInfo skuInfo = productFeignClient.getSkuInfo(skuId);
+                if (null != skuInfo) {
+                    goods.setId(skuInfo.getId());
+                    goods.setTitle(skuInfo.getSkuName());
+                    goods.setDefaultImg(skuInfo.getSkuDefaultImg());
+                    goods.setPrice(skuInfo.getPrice().doubleValue());
+                    goods.setCreateTime(new Date());
+                }
+                return skuInfo;
+            }
+        }, threadPoolExecutor);
+
+        //查询goods的品牌信息 需要借助skuInfo的tmId 使用 then
+        CompletableFuture<Void> completableFutureTrademark = completableFutureSkuInfo.thenAcceptAsync(new Consumer<SkuInfo>() {
+            @Override
+            public void accept(SkuInfo skuInfo) {
+                BaseTrademark baseTrademark = productFeignClient.getTrademark(skuInfo.getTmId());
+                if (null != baseTrademark) {
+                    goods.setTmId(baseTrademark.getId());
+                    goods.setTmName(baseTrademark.getTmName());
+                    goods.setTmLogoUrl(baseTrademark.getLogoUrl());
+                }
+            }
+        }, threadPoolExecutor);
+
+        //查询goods的分类信息 需要借助skuInfo的Category3Id 使用 then
+        //查询goods的分类信息
+        CompletableFuture<Void> completableFutureCategoryView = completableFutureSkuInfo.thenAcceptAsync(new Consumer<SkuInfo>() {
+            @Override
+            public void accept(SkuInfo skuInfo) {
+                BaseCategoryView categoryView = productFeignClient.getCategoryView(skuInfo.getCategory3Id());
+                if (null != categoryView) {
+                    goods.setCategory1Id(categoryView.getCategory1Id());
+                    goods.setCategory2Id(categoryView.getCategory2Id());
+                    goods.setCategory3Id(categoryView.getCategory3Id());
+
+                    goods.setCategory1Name(categoryView.getCategory1Name());
+                    goods.setCategory2Name(categoryView.getCategory2Name());
+                    goods.setCategory3Name(categoryView.getCategory3Name());
+                }
+            }
+        }, threadPoolExecutor);
+
+
+        //封装平台属性的集合,不需要返回值 也不需要skuinfo的东西 异步使用
+        CompletableFuture completableFutureBaseAttrInfos = CompletableFuture.runAsync(new Runnable() {
+            @Override
+            public void run() {
+                List<BaseAttrInfo> baseAttrInfos = productFeignClient.getAttrList(skuId);
+                if (null != baseAttrInfos) {
+                    List<SearchAttr> searchAttrs = baseAttrInfos.stream().map(baseAttrInfo -> {
+                        SearchAttr searchAttr = new SearchAttr();
+                        searchAttr.setAttrId(baseAttrInfo.getId());
+                        searchAttr.setAttrName(baseAttrInfo.getAttrName());
+                        //一个sku只对应一个属性值
+                        List<BaseAttrValue> baseAttrValueList = baseAttrInfo.getAttrValueList();
+                        searchAttr.setAttrValue(baseAttrValueList.get(0).getValueName());
+                        return searchAttr;
+                    }).collect(Collectors.toList());
+
+                    goods.setAttrs(searchAttrs);
+                }
+            }
+        }, threadPoolExecutor);
+        //allOf 所有任务完成后再插入
+        CompletableFuture.allOf(completableFutureSkuInfo, completableFutureTrademark, completableFutureCategoryView, completableFutureBaseAttrInfos).join();
+
+        //调用es的api插入数据
+        goodsElasticsearchRepository.save(goods);
+
+        long end = System.currentTimeMillis();
+        System.out.println("上架消耗时间" + (end - start));
+    }
+
+    private void onSale_bak(String skuId) {
+        long start = System.currentTimeMillis();
         //查询skuInfo
         SkuInfo skuInfo = productFeignClient.getSkuInfo(skuId);
 
@@ -94,6 +190,8 @@ public class ListServiceImpl implements ListService {
 
         //调用es的api插入数据
         goodsElasticsearchRepository.save(goods);
+        long end = System.currentTimeMillis();
+        System.out.println("上架消耗时间" + (end - start));
     }
 
     @Override

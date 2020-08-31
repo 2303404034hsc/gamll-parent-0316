@@ -9,9 +9,6 @@ import com.atguigu.gmall.model.product.SpuSaleAttr;
 import com.atguigu.gmall.product.client.ProductFeignClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import springfox.documentation.spring.web.json.Json;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -40,6 +37,7 @@ public class ItemServiceImpl implements ItemService {
 
     /**
      * 使用多线程优化
+     *
      * @param skuId
      * @return
      */
@@ -54,7 +52,7 @@ public class ItemServiceImpl implements ItemService {
 
     private Map<String, Object> getItemMultiThread(String skuId) {
         long start = System.currentTimeMillis();
-        Map<String,Object> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>();
 
         //商品价格查询 不需要返回值
         CompletableFuture completableFutureSkuPrice = CompletableFuture.runAsync(new Runnable() {
@@ -62,19 +60,19 @@ public class ItemServiceImpl implements ItemService {
             public void run() {
                 BigDecimal price = new BigDecimal("0");
                 price = productFeignClient.getSkuPrice(skuId);
-                map.put("price",price);
+                map.put("price", price);
             }
-        },threadPoolExecutor);
+        }, threadPoolExecutor);
 
         //skuInfo查询 需要返回值 所以用 supply
         CompletableFuture<SkuInfo> completableFutureSkuInfo = CompletableFuture.supplyAsync(new Supplier<SkuInfo>() {
             @Override
             public SkuInfo get() {
-                SkuInfo skuInfo =  productFeignClient.getSkuInfo(skuId);
-                map.put("skuInfo",skuInfo);
+                SkuInfo skuInfo = productFeignClient.getSkuInfo(skuId);
+                map.put("skuInfo", skuInfo);
                 return skuInfo;
             }
-        },threadPoolExecutor);
+        }, threadPoolExecutor);
 
         //查询分类列表 不需要返回值，需要借助skuInfo里面的category3Id
         CompletableFuture<Void> categoryView = completableFutureSkuInfo.thenAcceptAsync(new Consumer<SkuInfo>() {
@@ -83,7 +81,7 @@ public class ItemServiceImpl implements ItemService {
                 BaseCategoryView baseCategoryView = productFeignClient.getCategoryView(skuInfo.getCategory3Id());
                 map.put("categoryView", baseCategoryView);
             }
-        },threadPoolExecutor);
+        }, threadPoolExecutor);
         //查询销售属性 不需要，需要借助skuInfo里面的spuId
         CompletableFuture<Void> spuSaleAttrList = completableFutureSkuInfo.thenAcceptAsync(new Consumer<SkuInfo>() {
             @Override
@@ -91,7 +89,7 @@ public class ItemServiceImpl implements ItemService {
                 List<SpuSaleAttr> spuSaleAttrs = productFeignClient.getMySpuSaleAttrs(skuInfo.getSpuId(), skuId);
                 map.put("spuSaleAttrList", spuSaleAttrs);
             }
-        },threadPoolExecutor);
+        }, threadPoolExecutor);
 
         //销售属性对应sku的hash表
         CompletableFuture<Void> valuesSkuJson = completableFutureSkuInfo.thenAcceptAsync(new Consumer<SkuInfo>() {
@@ -101,7 +99,7 @@ public class ItemServiceImpl implements ItemService {
                 Map<String, String> valueIdsMap = productFeignClient.getSkuValueIdsMap(skuInfo.getSpuId());
                 map.put("valuesSkuJson", JSON.toJSONString(valueIdsMap));
             }
-        },threadPoolExecutor);
+        }, threadPoolExecutor);
 
         //热点数据更新
         CompletableFuture completableFutureHotScore = CompletableFuture.runAsync(new Runnable() {
@@ -110,11 +108,11 @@ public class ItemServiceImpl implements ItemService {
                 //通过listFeign 调用热度值接口
                 listFeignClient.hotScore(skuId);
             }
-        },threadPoolExecutor);
+        }, threadPoolExecutor);
 
-        CompletableFuture.allOf(completableFutureSkuPrice,completableFutureSkuInfo,categoryView,spuSaleAttrList,valuesSkuJson).join();
+        CompletableFuture.allOf(completableFutureSkuPrice, completableFutureSkuInfo, categoryView, spuSaleAttrList, valuesSkuJson,completableFutureHotScore).join();
         long end = System.currentTimeMillis();
-        System.out.println("消耗时间" +(end - start));
+        System.out.println("消耗时间" + (end - start));
         return map;
     }
 
@@ -122,31 +120,31 @@ public class ItemServiceImpl implements ItemService {
 
         long start = System.currentTimeMillis();
         //商品详情汇总封装基础数据
-        Map<String,Object> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>();
 
         //商品价格查询
         BigDecimal price = new BigDecimal("0");
         price = productFeignClient.getSkuPrice(skuId);
-        map.put("price",price);
+        map.put("price", price);
 
         //查看sku详细信息sku_info
-        SkuInfo skuInfo =  productFeignClient.getSkuInfo(skuId);
-        map.put("skuInfo",skuInfo);
+        SkuInfo skuInfo = productFeignClient.getSkuInfo(skuId);
+        map.put("skuInfo", skuInfo);
 
         //查询分类列表
         BaseCategoryView baseCategoryView = productFeignClient.getCategoryView(skuInfo.getCategory3Id());
-        map.put("categoryView",baseCategoryView);
+        map.put("categoryView", baseCategoryView);
 
         //查询销售属性
-        List<SpuSaleAttr> spuSaleAttrs = productFeignClient.getMySpuSaleAttrs(skuInfo.getSpuId(),skuId);
-        map.put("spuSaleAttrList",spuSaleAttrs);
+        List<SpuSaleAttr> spuSaleAttrs = productFeignClient.getMySpuSaleAttrs(skuInfo.getSpuId(), skuId);
+        map.put("spuSaleAttrList", spuSaleAttrs);
 
         //销售属性对应sku的hash表
-        Map<String,String> valueIdsMap = productFeignClient.getSkuValueIdsMap(skuInfo.getSpuId());
+        Map<String, String> valueIdsMap = productFeignClient.getSkuValueIdsMap(skuInfo.getSpuId());
         map.put("valuesSkuJson", JSON.toJSONString(valueIdsMap));
 
         long end = System.currentTimeMillis();
-        System.out.println("消耗时间" +(end - start));
+        System.out.println("消耗时间" + (end - start));
         return map;
     }
 }
