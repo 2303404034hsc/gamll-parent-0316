@@ -1,22 +1,37 @@
 package com.atguigu.gmall.list.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.list.repository.GoodsElasticsearchRepository;
 import com.atguigu.gmall.list.service.ListService;
 import com.atguigu.gmall.model.list.Goods;
 import com.atguigu.gmall.model.list.SearchAttr;
+import com.atguigu.gmall.model.list.SearchParam;
+import com.atguigu.gmall.model.list.SearchResponseVo;
 import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.client.ProductFeignClient;
+import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Consumer;
@@ -42,7 +57,11 @@ public class ListServiceImpl implements ListService {
     @Autowired
     ThreadPoolExecutor threadPoolExecutor;
 
+    @Autowired
+    RestHighLevelClient restHighLevelClient;
 
+
+    //es上架
     @Override
     public void onSale(String skuId) {
         //优化前版本
@@ -51,6 +70,7 @@ public class ListServiceImpl implements ListService {
         onSale_thread(skuId);
 
     }
+
     private void onSale_thread(String skuId) {
         long start = System.currentTimeMillis();
         Goods goods = new Goods();
@@ -194,6 +214,7 @@ public class ListServiceImpl implements ListService {
         System.out.println("上架消耗时间" + (end - start));
     }
 
+    //es下架
     @Override
     public void cancelSale(String skuId) {
         //调用es的api删除数据,根据skuId删除
@@ -210,7 +231,7 @@ public class ListServiceImpl implements ListService {
         hotScore = redisTemplate.opsForZSet().incrementScore("hotScore", "sku:" + skuId, 1).longValue();
 
         //判断是否达到阈值，每10次更新一次es
-        if(hotScore % 10 == 0){
+        if (hotScore % 10 == 0) {
             //先使用es API查询出来
             Optional<Goods> goodsOptional = goodsElasticsearchRepository.findById(Long.parseLong(skuId));
 
@@ -220,5 +241,109 @@ public class ListServiceImpl implements ListService {
             goods.setHotScore(hotScore);
             goodsElasticsearchRepository.save(goods);
         }
+    }
+
+    //es的查询list
+    @Override
+    public SearchResponseVo list(SearchParam searchParam) {
+
+        SearchResponseVo searchResponseVo = new SearchResponseVo();
+        //生成dsl语句
+        SearchRequest searchRequest = buildQueryDsl(searchParam);
+
+        // 执行查询操作，调用search方法
+        SearchResponse search = null;
+        try {
+            search = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //解析返回结果
+        searchResponseVo = parseSearchResult(search);
+
+        return searchResponseVo;
+    }
+
+    /**
+     * 解析返回结果
+     *
+     * @param search
+     * @return
+     */
+    private SearchResponseVo parseSearchResult(SearchResponse search) {
+        SearchResponseVo searchResponseVo = new SearchResponseVo();
+        SearchHits hits = search.getHits();
+        List<Goods> goodsList = new ArrayList<>();
+        for (SearchHit hit : hits) {
+            String sourceAsString = hit.getSourceAsString();
+            Goods good = JSON.parseObject(sourceAsString, Goods.class);
+
+            //解析高亮 将高亮的title替代good的title
+            Map<String, HighlightField> highlightFields = hit.getHighlightFields();
+            //有些商品没有高亮字段 需要先进行判断
+            if(null !=highlightFields){
+                //获取高亮文本
+                HighlightField title = highlightFields.get("title");
+                String highlightText = title.fragments()[0].string();
+                //替换
+                good.setTitle(highlightText);
+            }
+
+            goodsList.add(good);
+        }
+        searchResponseVo.setGoodsList(goodsList);
+
+        return searchResponseVo;
+    }
+
+    /**
+     * 封装dsl搜索请求语句
+     *
+     * @param searchParam
+     * @return
+     */
+    private SearchRequest buildQueryDsl(SearchParam searchParam) {
+        //搜索参数
+        String[] props = searchParam.getProps();
+        String trademark = searchParam.getTrademark();
+        String order = searchParam.getOrder();
+        //三级分类和关键字有且仅有一个
+        String keyword = searchParam.getKeyword();//特殊可选
+        Long category3Id = searchParam.getCategory3Id();//特殊可选
+
+
+        // 定义dsl语句
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
+
+        if (StringUtils.isNotBlank(keyword)) {
+            boolQueryBuilder.must(new MatchQueryBuilder("title", keyword));
+
+            //高亮解析
+            HighlightBuilder highlightBuilder = new HighlightBuilder();
+            highlightBuilder.preTags("<span style='color:red;font-weight:bolder;'>");
+            highlightBuilder.field("title");
+            highlightBuilder.postTags("</span>");
+            searchSourceBuilder.highlighter(highlightBuilder);
+
+
+        }
+        if (null != category3Id && category3Id > 0) {
+            boolQueryBuilder.filter(new TermQueryBuilder("category3Id", category3Id));
+        }
+
+
+
+
+        searchSourceBuilder.query(boolQueryBuilder);
+        System.out.println(searchSourceBuilder.toString());
+
+        // 封装searchRequest
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.indices("goods");
+        searchRequest.types("info");
+        searchRequest.source(searchSourceBuilder);
+        return searchRequest;
     }
 }

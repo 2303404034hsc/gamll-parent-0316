@@ -1,8 +1,11 @@
 package com.atguigu.gmall.list.client;
 
+import com.atguigu.gmall.common.result.Result;
+import com.atguigu.gmall.model.list.SearchParam;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 /**
  * @author ccc
@@ -19,4 +22,7 @@ public interface ListFeignClient {
 
     @RequestMapping("api/list/hotScore/{skuId}")
     void hotScore(@PathVariable("skuId") String skuId);
+
+    @PostMapping("api/list/list")
+    Result list(@RequestBody SearchParam searchParam);
 }

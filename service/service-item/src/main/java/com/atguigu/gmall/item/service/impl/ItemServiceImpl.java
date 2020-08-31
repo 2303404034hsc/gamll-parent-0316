@@ -45,7 +45,7 @@ public class ItemServiceImpl implements ItemService {
     public Map<String, Object> getItem(String skuId) {
         //普通的缓存方法
 //        Map<String,Object> map = getItemBak(skuId);
-        //多线程优化后的方法 组合式异步编程
+        //多线程优化后的方法 组合式异步编程,里面有热点数据的方法
         Map<String, Object> map = getItemMultiThread(skuId);
         return map;
     }
@@ -101,6 +101,7 @@ public class ItemServiceImpl implements ItemService {
             }
         }, threadPoolExecutor);
 
+        //=============热点数据==============
         //热点数据更新
         CompletableFuture completableFutureHotScore = CompletableFuture.runAsync(new Runnable() {
             @Override
