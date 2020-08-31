@@ -2,6 +2,7 @@ package com.atguigu.gmall.product.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall.common.cache.GmallCache;
+import com.atguigu.gmall.list.client.ListFeignClient;
 import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.mapper.SkuAttrValueMapper;
 import com.atguigu.gmall.product.mapper.SkuImageMapper;
@@ -44,6 +45,8 @@ public class SkuInfoServiceImpl implements SkuInfoService {
     @Autowired
     RedisTemplate redisTemplate;
 
+    @Autowired
+    ListFeignClient listFeignClient;
 
     @Override
     public void saveSkuInfo(SkuInfo skuInfo) {
@@ -95,6 +98,9 @@ public class SkuInfoServiceImpl implements SkuInfoService {
         SkuInfo skuInfo = skuInfoMapper.selectOne(skuInfoQueryWrapper);
         skuInfo.setIsSale(1);
         skuInfoMapper.updateById(skuInfo);
+
+        //调用listFeign 完成真正的上架功能 同步到nosql
+        listFeignClient.onSale(skuId);
     }
 
     @Override
@@ -104,6 +110,9 @@ public class SkuInfoServiceImpl implements SkuInfoService {
         SkuInfo skuInfo = skuInfoMapper.selectOne(skuInfoQueryWrapper);
         skuInfo.setIsSale(0);
         skuInfoMapper.updateById(skuInfo);
+
+        //调用listFeign 完成真正的下架功能 同步到nosql
+        listFeignClient.cancelSale(skuId);
     }
 
     //获取商品详情

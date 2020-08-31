@@ -2,6 +2,7 @@ package com.atguigu.gmall.item.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall.item.service.ItemService;
+import com.atguigu.gmall.list.client.ListFeignClient;
 import com.atguigu.gmall.model.product.BaseCategoryView;
 import com.atguigu.gmall.model.product.SkuInfo;
 import com.atguigu.gmall.model.product.SpuSaleAttr;
@@ -34,6 +35,9 @@ public class ItemServiceImpl implements ItemService {
     @Autowired
     ThreadPoolExecutor threadPoolExecutor;
 
+    @Autowired
+    ListFeignClient listFeignClient;
+
     /**
      * 使用多线程优化
      * @param skuId
@@ -45,6 +49,10 @@ public class ItemServiceImpl implements ItemService {
 //        Map<String,Object> map = getItemBak(skuId);
         //多线程优化后的方法 组合式异步编程
         Map<String, Object> map = getItemMultiThread(skuId);
+
+        //通过listFeign 调用热度值接口
+        listFeignClient.hotScore(skuId);
+
         return map;
     }
 
