@@ -49,10 +49,6 @@ public class ItemServiceImpl implements ItemService {
 //        Map<String,Object> map = getItemBak(skuId);
         //多线程优化后的方法 组合式异步编程
         Map<String, Object> map = getItemMultiThread(skuId);
-
-        //通过listFeign 调用热度值接口
-        listFeignClient.hotScore(skuId);
-
         return map;
     }
 
@@ -104,6 +100,15 @@ public class ItemServiceImpl implements ItemService {
 
                 Map<String, String> valueIdsMap = productFeignClient.getSkuValueIdsMap(skuInfo.getSpuId());
                 map.put("valuesSkuJson", JSON.toJSONString(valueIdsMap));
+            }
+        },threadPoolExecutor);
+
+        //热点数据更新
+        CompletableFuture completableFutureHotScore = CompletableFuture.runAsync(new Runnable() {
+            @Override
+            public void run() {
+                //通过listFeign 调用热度值接口
+                listFeignClient.hotScore(skuId);
             }
         },threadPoolExecutor);
 

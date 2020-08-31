@@ -22,4 +22,6 @@ public interface BaseTrademarkService {
     void update(BaseTrademark trademark);
 
     void removeById(Long trademarkId);
+
+    BaseTrademark getTrademark(Long tmId);
 }

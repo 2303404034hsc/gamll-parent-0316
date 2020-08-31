@@ -51,4 +51,9 @@ public class BaseTrademarkServiceImpl implements BaseTrademarkService {
     public void removeById(Long trademarkId) {
         trademarkMapper.deleteById(trademarkId);
     }
+
+    @Override
+    public BaseTrademark getTrademark(Long tmId) {
+        return trademarkMapper.selectById(tmId);
+    }
 }

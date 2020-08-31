@@ -8,4 +8,6 @@ public interface ListService {
     void onSale(String skuId);
 
     void cancelSale(String skuId);
+
+    void hotScore(String skuId);
 }

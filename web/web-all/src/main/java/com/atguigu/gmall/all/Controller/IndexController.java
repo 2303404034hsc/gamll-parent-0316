@@ -30,7 +30,6 @@ public class IndexController {
 
         request.setAttribute("list", result.getData());
 
-
         return "index/index";
     }
 

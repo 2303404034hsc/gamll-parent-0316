@@ -48,10 +48,10 @@ public class ListApiController {
         listService.cancelSale(skuId);
     }
 
-
+    //热点数据
     @RequestMapping("hotScore/{skuId}")
     void hotScore(@PathVariable("skuId") String skuId){
-
+        listService.hotScore(skuId);
     }
 
 
