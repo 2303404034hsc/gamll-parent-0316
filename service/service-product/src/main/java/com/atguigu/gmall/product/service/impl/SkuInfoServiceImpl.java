@@ -93,6 +93,7 @@ public class SkuInfoServiceImpl implements SkuInfoService {
 
     @Override
     public void onSale(String skuId) {
+
         QueryWrapper<SkuInfo> skuInfoQueryWrapper = new QueryWrapper<>();
         skuInfoQueryWrapper.eq("id", skuId);
         SkuInfo skuInfo = skuInfoMapper.selectOne(skuInfoQueryWrapper);

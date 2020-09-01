@@ -74,10 +74,10 @@
                 <div class="value logos">
                     <ul class="logo-list">
                         <li th:each="trademark:${trademarkList}">
-                            <a th:href="${urlParam}+'&trademark='+${trademark.tmId}+':'+${trademark.tmName}+'&order='+${searchParam.order}" th:text="${trademark.tmName}">属性值111</a>
+                            <a th:href="${urlParam}+'&trademark='+${trademark.tmId}+':'+${trademark.tmName}+'&order='+${searchParam.order}"> <img th:src="${trademark.tmLogoUrl}" th:alt="${trademark.tmName}"></a>
                         </li>
                     </ul>
-                </div>
+                </div>o
                 <!--<div class="ext">-->
                     <!--<a href="javascript:void(0);" class="sui-btn">多选</a>-->
                     <!--<a href="javascript:void(0);">更多</a>-->

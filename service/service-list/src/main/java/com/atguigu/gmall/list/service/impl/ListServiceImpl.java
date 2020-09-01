@@ -1,13 +1,9 @@
 package com.atguigu.gmall.list.service.impl;
 
 import com.alibaba.fastjson.JSON;
-import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.list.repository.GoodsElasticsearchRepository;
 import com.atguigu.gmall.list.service.ListService;
-import com.atguigu.gmall.model.list.Goods;
-import com.atguigu.gmall.model.list.SearchAttr;
-import com.atguigu.gmall.model.list.SearchParam;
-import com.atguigu.gmall.model.list.SearchResponseVo;
+import com.atguigu.gmall.model.list.*;
 import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.client.ProductFeignClient;
 import org.apache.commons.lang3.StringUtils;
@@ -20,17 +16,19 @@ import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.nested.NestedAggregationBuilder;
+import org.elasticsearch.search.aggregations.bucket.nested.ParsedNested;
+import org.elasticsearch.search.aggregations.bucket.terms.*;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -243,11 +241,12 @@ public class ListServiceImpl implements ListService {
         }
     }
 
-    //es的查询list
+    //es的查询list,包括关键字和id查询 SearchParam里面都封装了
     @Override
     public SearchResponseVo list(SearchParam searchParam) {
 
         SearchResponseVo searchResponseVo = new SearchResponseVo();
+
         //生成dsl语句
         SearchRequest searchRequest = buildQueryDsl(searchParam);
 
@@ -282,7 +281,7 @@ public class ListServiceImpl implements ListService {
             //解析高亮 将高亮的title替代good的title
             Map<String, HighlightField> highlightFields = hit.getHighlightFields();
             //有些商品没有高亮字段 需要先进行判断
-            if(null !=highlightFields){
+            if (null != highlightFields && highlightFields.size() > 0) {
                 //获取高亮文本
                 HighlightField title = highlightFields.get("title");
                 String highlightText = title.fragments()[0].string();
@@ -292,8 +291,73 @@ public class ListServiceImpl implements ListService {
 
             goodsList.add(good);
         }
-        searchResponseVo.setGoodsList(goodsList);
 
+
+        //=======解析聚合函数================
+        //Aggregation是个接口 没有get buckets的方法，需要用另外一个实现类ParsedLongTerms
+//        Aggregation tmIdAgg = stringAggregationMap.get("tmIdAgg");
+        Map<String, Aggregation> stringAggregationMap = search.getAggregations().asMap();
+        //商标相关解析
+        ParsedLongTerms tmIdAgg = (ParsedLongTerms) stringAggregationMap.get("tmIdAgg");
+        List<SearchResponseTmVo> trademarkList = tmIdAgg.getBuckets().stream().map(bucket -> {
+            //searchResponseVo需要的是private List<SearchResponseTmVo> trademarkList;
+            SearchResponseTmVo trademark = new SearchResponseTmVo();
+
+            //获取bucket里面的商标id
+//            Long tmId = Long.parseLong(bucket.getKeyAsString());
+            long tmId = bucket.getKeyAsNumber().longValue();
+            trademark.setTmId(tmId);
+
+            //获取商品名称
+            //这个不需要循环 ，因为每件商品都只有一个品牌 拿index(0)即可
+            Map<String, Aggregation> stringAggregationMapTmIdAgg = bucket.getAggregations().asMap();
+            ParsedStringTerms tmNameAgg = (ParsedStringTerms) stringAggregationMapTmIdAgg.get("tmNameAgg");
+            String tmName = tmNameAgg.getBuckets().get(0).getKeyAsString();
+            trademark.setTmName(tmName);
+
+            //获取商品logoUrl
+            // 这个不需要循环 ，因为每件商品都只有一个url 拿index(0)即可
+            ParsedStringTerms tmLogoUrlAgg = (ParsedStringTerms) stringAggregationMapTmIdAgg.get("tmLogoUrlAgg");
+            String tmLogoUrl = tmLogoUrlAgg.getBuckets().get(0).getKeyAsString();
+            trademark.setTmLogoUrl(tmLogoUrl);
+
+            return trademark;
+        }).collect(Collectors.toList());
+
+        //属性相关解析
+        ParsedNested attrsAgg = (ParsedNested) stringAggregationMap.get("attrsAgg");
+        ParsedLongTerms attrIdAgg = (ParsedLongTerms) attrsAgg.getAggregations().get("attrIdAgg");
+        List<SearchResponseAttrVo> attrVoList = attrIdAgg.getBuckets().stream().map(bucket -> {
+            SearchResponseAttrVo attrVo = new SearchResponseAttrVo();
+            //解析获取attrId
+            long attrId = bucket.getKeyAsNumber().longValue();
+            attrVo.setAttrId(attrId);
+
+            //解析获取attrName
+            //这个不需要循环 ，因为每件商品都只有一个attrName 拿index(0)即可
+            Map<String, Aggregation> stringAggregationMapattrIdAgg = bucket.getAggregations().asMap();
+            ParsedStringTerms attrNameAgg = (ParsedStringTerms) stringAggregationMapattrIdAgg.get("attrNameAgg");
+            String attrName = attrNameAgg.getBuckets().get(0).getKeyAsString();
+            attrVo.setAttrName(attrName);
+
+            //解析获取attrValue
+            //这个需要循环，因为每件商品都可由有好几个属性
+            //searchResponseVo-->private List<SearchResponseAttrVo> attrsList = new ArrayList<>();
+            ParsedStringTerms attrValueAgg = (ParsedStringTerms) stringAggregationMapattrIdAgg.get("attrValueAgg");
+            List<String> attrValueList = attrValueAgg.getBuckets().stream().map(attrValueBucket ->{
+                String attrValue = attrValueBucket.getKeyAsString();
+                return attrValue;
+            }).collect(Collectors.toList());
+
+            attrVo.setAttrValueList(attrValueList);
+
+            return attrVo;
+        }).collect(Collectors.toList());
+
+        //设置值
+        searchResponseVo.setGoodsList(goodsList);
+        searchResponseVo.setTrademarkList(trademarkList);
+        searchResponseVo.setAttrsList(attrVoList);
         return searchResponseVo;
     }
 
@@ -310,6 +374,7 @@ public class ListServiceImpl implements ListService {
         String order = searchParam.getOrder();
         //三级分类和关键字有且仅有一个
         String keyword = searchParam.getKeyword();//特殊可选
+        //三级分类
         Long category3Id = searchParam.getCategory3Id();//特殊可选
 
 
@@ -317,6 +382,7 @@ public class ListServiceImpl implements ListService {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
 
+        //must匹配 关键字
         if (StringUtils.isNotBlank(keyword)) {
             boolQueryBuilder.must(new MatchQueryBuilder("title", keyword));
 
@@ -327,22 +393,45 @@ public class ListServiceImpl implements ListService {
             highlightBuilder.postTags("</span>");
             searchSourceBuilder.highlighter(highlightBuilder);
 
-
         }
+        //三级分类 filter-term匹配
         if (null != category3Id && category3Id > 0) {
             boolQueryBuilder.filter(new TermQueryBuilder("category3Id", category3Id));
         }
 
-
-
-
+        //放入boolQueryBuilder
         searchSourceBuilder.query(boolQueryBuilder);
+
+
+        //==========聚合函数==============
+        //聚合品牌
+        TermsAggregationBuilder termsAggregationBuilderTmIdAgg = AggregationBuilders.terms("tmIdAgg").field("tmId")
+                .subAggregation(AggregationBuilders.terms("tmNameAgg").field("tmName"))
+                .subAggregation(AggregationBuilders.terms("tmLogoUrlAgg").field("tmLogoUrl"));
+
+        //聚合属性 该属性是nested的 需要另外一个aggregationBuilder (AggregationBuilders.nested)==> NestedAggregationBuilder
+
+        NestedAggregationBuilder nestedAggregationBuilderattrsAgg = AggregationBuilders.nested("attrsAgg", "attrs")
+                //有三层 第一层是没有用的 attrs
+                .subAggregation(AggregationBuilders.terms("attrIdAgg").field("attrs.attrId")
+                        //第二层是attrId （只有一个值 index(0)
+                        //第三层是attrName（只有一个值 index(0)）和attrValue(里面还有buckets
+                        .subAggregation(AggregationBuilders.terms("attrValueAgg").field("attrs.attrValue"))
+                        .subAggregation(AggregationBuilders.terms("attrNameAgg").field("attrs.attrName"))
+                );
+
+
+        searchSourceBuilder.aggregation(termsAggregationBuilderTmIdAgg);
+        searchSourceBuilder.aggregation(nestedAggregationBuilderattrsAgg);
+
+        //打印dsl语句
         System.out.println(searchSourceBuilder.toString());
 
         // 封装searchRequest
         SearchRequest searchRequest = new SearchRequest();
         searchRequest.indices("goods");
         searchRequest.types("info");
+        //放入searchSourceBuilder
         searchRequest.source(searchSourceBuilder);
         return searchRequest;
     }

@@ -119,7 +119,6 @@ public class GmallCacheAspect {
 
         Integer count = 10;
 
-        System.out.println("执行被代理之前");
         //获得参数
         Object[] args = point.getArgs();
 
