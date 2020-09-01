@@ -7,12 +7,14 @@ import com.atguigu.gmall.model.list.*;
 import com.atguigu.gmall.model.product.*;
 import com.atguigu.gmall.product.client.ProductFeignClient;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.NestedQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -24,6 +26,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.*;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
+import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -399,9 +402,61 @@ public class ListServiceImpl implements ListService {
             boolQueryBuilder.filter(new TermQueryBuilder("category3Id", category3Id));
         }
 
+        //===========属性查询===========
+        if(null != props&& props.length>0){
+            for (String prop : props) {
+                //&props=10:奢华:风格 第一个是attrId 第二个是attrValue 第三个是attrName
+                String[] split = prop.split(":");
+                String attrId = split[0];
+                String attrValue = split[1];
+                String attrName = split[2];
+
+                BoolQueryBuilder boolQueryBuilderNested = new BoolQueryBuilder();
+
+                //该用must-match 还是filter
+                boolQueryBuilderNested.filter(new TermQueryBuilder("attrs.attrId", attrId));
+                boolQueryBuilderNested.must(new MatchQueryBuilder("attrs.attrValue", attrValue));
+                boolQueryBuilderNested.must(new MatchQueryBuilder("attrs.attrName", attrName));
+
+                NestedQueryBuilder nestedQueryBuilder = new NestedQueryBuilder("attrs",boolQueryBuilderNested,ScoreMode.None);
+
+                boolQueryBuilder.filter(nestedQueryBuilder);
+
+            }
+        }
+
+        //===========属性查询===========
+        if(null != trademark){
+            //9:千奈美 第一个是tmId(long 第二个是tmName(keyword
+            String[] split = trademark.split(":");
+            String tmId = split[0];
+//            String tmName = split[0];
+            //只需要用term过滤tmId就可以了
+            boolQueryBuilder.filter(new TermQueryBuilder("tmId", tmId));
+        }
+
+        //===========热度、价格排序===========
+        //searchSourceBuilder.sort("fieldName","升序asc/降序desc");
+        if(StringUtils.isNotBlank(order)){
+            //1:asc
+            String[] split = order.split(":");
+            String type = split[0];
+            String sort = split[1];
+            //排序  sort(类型,升序or降序)
+            if(type.equals("1")){
+                type = "hotScore";
+            }else{
+                type = "price";
+            }
+            searchSourceBuilder.sort(type,sort.equals("asc")? SortOrder.ASC:SortOrder.DESC);
+        }else {
+            //否则采用hotScore 字段和 降序
+            searchSourceBuilder.sort("hotScore",SortOrder.DESC);
+        }
+
+
         //放入boolQueryBuilder
         searchSourceBuilder.query(boolQueryBuilder);
-
 
         //==========聚合函数==============
         //聚合品牌
