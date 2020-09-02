@@ -269,7 +269,6 @@ public class ListServiceImpl implements ListService {
 
     /**
      * 解析返回结果
-     *
      * @param search
      * @return
      */
@@ -425,13 +424,13 @@ public class ListServiceImpl implements ListService {
             }
         }
 
-        //===========属性查询===========
+        //===========品牌查询===========
         if(null != trademark){
             //9:千奈美 第一个是tmId(long 第二个是tmName(keyword
             String[] split = trademark.split(":");
             String tmId = split[0];
 //            String tmName = split[0];
-            //只需要用term过滤tmId就可以了
+            //只需要用term过滤tmId就可以了 直接使用filter过滤即可 不需要打分
             boolQueryBuilder.filter(new TermQueryBuilder("tmId", tmId));
         }
 

@@ -2,6 +2,7 @@ package com.atguigu.gmall.all.Controller;
 
 import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.list.client.ListFeignClient;
+import com.atguigu.gmall.model.list.SearchAttr;
 import com.atguigu.gmall.model.list.SearchParam;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +10,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,26 +36,53 @@ public class ListController {
         model.addAttribute("urlParam", getUrlParam(searchParam));
         //获取排序参数
         Map<String, String> ordermap = getOrderMap(searchParam);
-
         model.addAttribute("orderMap", ordermap);
+
+        //品牌面包屑处理
+        String trademark = searchParam.getTrademark();
+        //tmId:tmName
+        if (StringUtils.isNotBlank(trademark)) {
+            model.addAttribute("trademarkParam", trademark.split(":")[1]);
+        }
+
+        //属性面包屑处理
+        String[] props = searchParam.getProps();
+
+        if (null != props && props.length > 0) {
+            List<SearchAttr> searchAttrs = new ArrayList<>();
+            for (String prop : props) {
+                String[] split = prop.split(":");
+                String attrId = split[0];
+                String attrValue = split[1];
+                String attrName = split[2];
+                //定义searchAttr来接收
+                SearchAttr searchAttr = new SearchAttr();
+                searchAttr.setAttrId(Long.parseLong(attrId));
+                searchAttr.setAttrValue(attrValue);
+                searchAttr.setAttrName(attrName);
+
+                searchAttrs.add(searchAttr);
+            }
+            model.addAttribute("propsParamList", searchAttrs);
+        }
         return "list/index";
     }
 
     private Map<String, String> getOrderMap(SearchParam searchParam) {
-        Map<String,String> ordermap = new HashMap<>();
+        Map<String, String> ordermap = new HashMap<>();
         String order = searchParam.getOrder();
         //选择用户的东西进行排序，如果没有 有默认值
-        if(StringUtils.isNotBlank(order)){
+        if (StringUtils.isNotBlank(order)) {
             //2:asc    第一个是按照啥类型排序 1是热度 2是价格  第二个是降序还是升序
             String[] split = order.split(":");
             String type = split[0];
             String sort = split[1];
-            ordermap.put("type",type);//1 是按照hotScore排序 2 是按照价格排序
-            ordermap.put("sort",sort);// desc 降序 asc 升序
-        }else {
+            ordermap.put("type", type);//1 是按照hotScore排序 2 是按照价格排序
+            ordermap.put("sort", sort);// desc 降序 asc 升序
+        } else {
             //默认按照热度降序
-            ordermap.put("type","1");//1 是按照hotScore排序 2 是按照价格排序
-            ordermap.put("sort","desc");// desc 降序 asc 升序
+            ordermap.put("type", "1");//1 是按照hotScore排序 2 是按照价格排序
+            ordermap.put("sort", "desc");// desc 降序 asc 升序
         }
         return ordermap;
     }

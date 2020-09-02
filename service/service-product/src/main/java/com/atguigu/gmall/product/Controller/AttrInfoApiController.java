@@ -34,7 +34,7 @@ public class AttrInfoApiController {
     //保存或修改平台属性
     @RequestMapping("saveAttrInfo")
     public Result saveAttrInfo(@RequestBody BaseAttrInfo baseAttrInfo) {
-
+        attrInfoService.saveAttrInfo(baseAttrInfo);
         return Result.ok();
     }
 
