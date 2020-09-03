@@ -3,6 +3,9 @@ package com.atguigu.gmall.gateway.filter;
 import com.alibaba.fastjson.JSONObject;
 import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.common.result.ResultCodeEnum;
+import com.atguigu.gmall.model.user.UserInfo;
+import com.atguigu.gmall.user.client.UserFeignClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -30,6 +33,9 @@ public class AuthGlobalFilter implements GlobalFilter {
     //匹配路径用的东西
     AntPathMatcher antPathMatcher = new AntPathMatcher();
 
+    @Autowired
+    UserFeignClient userFeignClient;
+
     @Value("${authUrls.url}")
     private String authUrls;// 白名单 --- 无论如何都需要登录的
 
@@ -44,7 +50,7 @@ public class AuthGlobalFilter implements GlobalFilter {
         String path = request.getPath().toString();//api/product/testApiController
 
         //不拦截认证中心的请求的请求
-        if (uri.indexOf("passport") != -1) {
+        if (uri.indexOf("passport") != -1||uri.indexOf(".png") != -1||uri.indexOf(".js") != -1) {
             return chain.filter(exchange);
         }
 
@@ -60,6 +66,9 @@ public class AuthGlobalFilter implements GlobalFilter {
             //鉴权，需要登录后才能访问
             return out(response, ResultCodeEnum.PERMISSION);
         }
+
+        // 网关中通过feign调用cas服务器
+        UserInfo userInfo = userFeignClient.verify("token");
 
         //白名单鉴权
         //trade.html,myOrder.html
@@ -77,8 +86,10 @@ public class AuthGlobalFilter implements GlobalFilter {
 
         }
 
-        //chain.filter(exchange); 转发请求到下一个servlet或者过滤器
-        return out(response, ResultCodeEnum.PERMISSION);
+        //转发请求到下一个servlet或者过滤器
+        return chain.filter(exchange);
+        //失败
+//        return out(response, ResultCodeEnum.PERMISSION);
     }
 
     // 接口鉴权失败返回数据
