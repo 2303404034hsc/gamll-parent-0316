@@ -50,7 +50,10 @@ public class AuthGlobalFilter implements GlobalFilter {
         String path = request.getPath().toString();//api/product/testApiController
 
         //不拦截认证中心的请求的请求
-        if (uri.indexOf("passport") != -1||uri.indexOf(".png") != -1||uri.indexOf(".js") != -1) {
+        if (uri.indexOf("passport") != -1
+                || uri.indexOf(".png") != -1
+                || uri.indexOf(".js") != -1
+                || uri.indexOf(".ico") != -1) {
             return chain.filter(exchange);
         }
 
@@ -69,6 +72,7 @@ public class AuthGlobalFilter implements GlobalFilter {
 
         // 网关中通过feign调用cas服务器
         UserInfo userInfo = userFeignClient.verify("token");
+        System.out.println("userInfo:" + userInfo);
 
         //白名单鉴权
         //trade.html,myOrder.html
