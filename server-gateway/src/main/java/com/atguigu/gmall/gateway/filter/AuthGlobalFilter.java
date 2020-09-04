@@ -30,14 +30,18 @@ import java.nio.charset.StandardCharsets;
  */
 @Component
 public class AuthGlobalFilter implements GlobalFilter {
-    //匹配路径用的东西
+
+    /**
+     * 匹配路径用的东西
+     */
     AntPathMatcher antPathMatcher = new AntPathMatcher();
 
     @Autowired
     UserFeignClient userFeignClient;
 
     @Value("${authUrls.url}")
-    private String authUrls;// 白名单 --- 无论如何都需要登录的
+    // 白名单 --- 无论如何都需要登录的
+    private String authUrls;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -46,14 +50,16 @@ public class AuthGlobalFilter implements GlobalFilter {
         ServerHttpResponse response = exchange.getResponse();
 
         //获取请求地址
-        String uri = request.getURI().toString();//http://item.gmall.com/api/product/testApiController
-        String path = request.getPath().toString();//api/product/testApiController
+        //http://item.gmall.com/api/product/testApiController
+        String uri = request.getURI().toString();
+        //api/product/testApiController
+        String path = request.getPath().toString();
 
         //不拦截认证中心的请求的请求
-        if (uri.indexOf("passport") != -1
-                || uri.indexOf(".png") != -1
-                || uri.indexOf(".js") != -1
-                || uri.indexOf(".ico") != -1) {
+        if (uri.contains("passport")
+                || uri.contains(".png")
+                || uri.contains(".js")
+                || uri.contains(".ico") ) {
             return chain.filter(exchange);
         }
 
