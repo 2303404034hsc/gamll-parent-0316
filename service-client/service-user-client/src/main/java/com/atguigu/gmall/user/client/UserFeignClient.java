@@ -12,6 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @FeignClient(value = "service-user")
 public interface UserFeignClient {
 
-    @RequestMapping("api/user/inner/verify/{token}")
-    public UserInfo verify(@PathVariable("token") String token);
+    @RequestMapping("api/user/passport/inner/verify/{token}")
+    public String verify(@PathVariable("token") String token);
 }
