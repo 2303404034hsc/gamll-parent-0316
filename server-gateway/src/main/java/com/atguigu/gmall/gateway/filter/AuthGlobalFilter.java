@@ -5,6 +5,7 @@ import com.atguigu.gmall.common.result.Result;
 import com.atguigu.gmall.common.result.ResultCodeEnum;
 import com.atguigu.gmall.model.user.UserInfo;
 import com.atguigu.gmall.user.client.UserFeignClient;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -19,7 +20,6 @@ import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.MultiValueMap;
-import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -57,13 +57,11 @@ public class AuthGlobalFilter implements GlobalFilter {
         //api/product/testApiController
         String path = request.getPath().toString();
 
+
+        ///js/plugins/axios.min.map
         //不拦截认证中心的请求的请求
-        if (uri.contains("passport")
-                || uri.contains(".png")
-                || uri.contains(".js")
-                || uri.contains("js")
-                || uri.contains(".ico")
-                || uri.contains(".css")) {
+        if(StringUtils.containsAny(uri,
+                "passport",".png",".jpg", ".js",".ico",".css",".map")){
             return chain.filter(exchange);
         }
 
@@ -105,7 +103,7 @@ public class AuthGlobalFilter implements GlobalFilter {
                 if(StringUtils.isEmpty(userId)){
                     // 如果没有权限 重定向到登录页面
                     response.setStatusCode(HttpStatus.SEE_OTHER);
-                    response.getHeaders().set(HttpHeaders.LOCATION, "http://passport.gmall.com/login?originUrl="+uri);
+                    response.getHeaders().set(HttpHeaders.LOCATION, "http://passport.gmall.com/login.html?originUrl="+uri);
                     Mono<Void> voidMono = response.setComplete();
                     return voidMono;
                 }
@@ -140,6 +138,11 @@ public class AuthGlobalFilter implements GlobalFilter {
             }
         }
 
+        //ajax异步访问会为空，进行特俗处理
+        if(StringUtils.isEmpty(userTempId)){
+            userTempId = request.getHeaders().getFirst("userTempId");
+        }
+
         return userTempId;
     }
 
@@ -153,6 +156,11 @@ public class AuthGlobalFilter implements GlobalFilter {
             if(null!=tokenCookie){
                 token = tokenCookie.getValue();
             }
+        }
+
+        //ajax异步访问会为空，进行特俗处理
+        if(StringUtils.isEmpty(token)){
+            token = request.getHeaders().getFirst("token");
         }
 
         return token;

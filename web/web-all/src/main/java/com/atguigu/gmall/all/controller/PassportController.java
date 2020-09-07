@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 public class PassportController {
 
-    @RequestMapping("login")
+    @RequestMapping("login.html")
     public String index(Model model,String originUrl){
         model.addAttribute("originUrl",originUrl);
         return "login";
