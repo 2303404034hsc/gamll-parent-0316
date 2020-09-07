@@ -1,6 +1,8 @@
 package com.atguigu.gmall.user.service.impl;
 
+import com.atguigu.gmall.model.user.UserAddress;
 import com.atguigu.gmall.model.user.UserInfo;
+import com.atguigu.gmall.user.mapper.UserAddressMapper;
 import com.atguigu.gmall.user.mapper.UserInfoMapper;
 import com.atguigu.gmall.user.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -11,6 +13,7 @@ import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -26,6 +29,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     RedisTemplate redisTemplate;
+
+    @Autowired
+    UserAddressMapper userAddressMapper;
 
 
     @Override
@@ -64,5 +70,14 @@ public class UserServiceImpl implements UserService {
             redisTemplate.opsForValue().set("user:login:" +token,userInfo.getId().toString());
         }
         return map;
+    }
+
+    @Override
+    public List<UserAddress> findUserAddressListByUserId(String userId) {
+
+        QueryWrapper<UserAddress> userAddressWrapper = new QueryWrapper<>();
+        userAddressWrapper.eq("user_id",userId);
+        List<UserAddress> userAddressList = userAddressMapper.selectList(userAddressWrapper);
+        return userAddressList;
     }
 }

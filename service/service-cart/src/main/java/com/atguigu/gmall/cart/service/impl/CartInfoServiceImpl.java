@@ -1,7 +1,9 @@
-package com.atguigu.gmall.cart.service;
+package com.atguigu.gmall.cart.service.impl;
 
 import com.atguigu.gmall.cart.mapper.CartInfoMapper;
+import com.atguigu.gmall.cart.service.CartInfoService;
 import com.atguigu.gmall.model.cart.CartInfo;
+import com.atguigu.gmall.product.client.ProductFeignClient;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
@@ -27,6 +29,9 @@ public class CartInfoServiceImpl implements CartInfoService {
 
     @Autowired
     RedisTemplate redisTemplate;
+
+    @Autowired
+    ProductFeignClient productFeignClient;
 
     @Override
     public void addCart(CartInfo cartInfo) {
@@ -88,6 +93,9 @@ public class CartInfoServiceImpl implements CartInfoService {
             //同步缓存
             Map<String,Object> map = new HashMap<>();
             for (CartInfo cartInfo : cartInfos) {
+                //加入商品价格
+                BigDecimal skuPrice = productFeignClient.getSkuPrice(cartInfo.getSkuId() + "");
+                cartInfo.setSkuPrice(skuPrice);
                 map.put(cartInfo.getSkuId()+"",cartInfo);
             }
             redisTemplate.boundHashOps("user:"+userId+":cart").putAll(map);

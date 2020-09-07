@@ -1,12 +1,14 @@
 package com.atguigu.gmall.user.controller;
 
 import com.atguigu.gmall.common.result.Result;
+import com.atguigu.gmall.model.user.UserAddress;
 import com.atguigu.gmall.model.user.UserInfo;
 import com.atguigu.gmall.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,5 +55,12 @@ public class UserApiController {
         map.put("nickName",userInfoFromDb.getNickName());
 
         return Result.ok(map);
+    }
+
+    //获取用户地址
+    @RequestMapping("inner/findUserAddressListByUserId/{userId}")
+    List<UserAddress> findUserAddressListByUserId(@PathVariable("userId") String userId){
+        List<UserAddress> userAddressList = userService.findUserAddressListByUserId(userId);
+        return userAddressList;
     }
 }

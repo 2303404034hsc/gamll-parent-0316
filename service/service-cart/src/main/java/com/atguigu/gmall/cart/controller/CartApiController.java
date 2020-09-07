@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -29,6 +30,23 @@ public class CartApiController {
 
     @Autowired
     ProductFeignClient productFeignClient;
+
+    @RequestMapping("inner/getCartListCheckedByUserId/{userId}")
+    public List<CartInfo>  getCartListCheckedByUserId(@PathVariable("userId") String userId){
+        //查询所有的购物车数据
+        List<CartInfo> cartInfos = cartInfoService.cartList(userId);
+        //过滤掉没有选中的
+        Iterator<CartInfo> it = cartInfos.iterator();
+
+        while(it.hasNext()){
+            CartInfo next = it.next();
+            if(next.getIsChecked() == 0){
+                it.remove();
+            }
+        }
+
+        return cartInfos;
+    }
 
     @RequestMapping("addCart")
     void addCart(@RequestBody CartInfo cartInfo,HttpServletRequest request){
