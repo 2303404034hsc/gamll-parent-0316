@@ -2,6 +2,7 @@ package com.atguigu.gmall.order.controller;
 
 import com.atguigu.gmall.cart.client.CartFeignClient;
 import com.atguigu.gmall.common.result.Result;
+import com.atguigu.gmall.common.util.HttpClientUtil;
 import com.atguigu.gmall.model.cart.CartInfo;
 import com.atguigu.gmall.model.enums.OrderStatus;
 import com.atguigu.gmall.model.enums.PaymentWay;
@@ -105,9 +106,17 @@ public class OrderApiController {
 
                 // 校验此时的真实价格(调用product系统)
                 BigDecimal price = productFeignClient.getSkuPrice(cartInfo.getSkuId() + "");
-
+                int iPrice = price.compareTo(cartInfo.getSkuPrice());
+                if(iPrice != 0){
+                    return Result.fail();
+                }
                 // 校验此时的真实库存(调用库存系统系统),webservice
-
+                // http工具类
+                String hasStock = HttpClientUtil.doGet("http://localhost:9001/hasStock?skuId=10221&num=2");
+                int iStock = new BigDecimal(hasStock).compareTo(new BigDecimal("0"));
+                if(iStock != 0){
+                    return Result.fail();
+                }
                 orderDetails.add(orderDetail);
             }
             orderInfo.setOrderDetailList(orderDetails);// 封装订单详情
