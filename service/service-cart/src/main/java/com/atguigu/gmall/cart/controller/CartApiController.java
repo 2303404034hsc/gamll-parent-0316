@@ -32,30 +32,30 @@ public class CartApiController {
     ProductFeignClient productFeignClient;
 
     @RequestMapping("inner/getCartListCheckedByUserId/{userId}")
-    public List<CartInfo>  getCartListCheckedByUserId(@PathVariable("userId") String userId){
+    public List<CartInfo> getCartListCheckedByUserId(@PathVariable("userId") String userId) {
         //查询所有的购物车数据
         List<CartInfo> cartInfos = cartInfoService.cartList(userId);
         //过滤掉没有选中的
         Iterator<CartInfo> it = cartInfos.iterator();
-
-        while(it.hasNext()){
-            CartInfo next = it.next();
-            if(next.getIsChecked() == 0){
-                it.remove();
+        if (null != it) {
+            while (it.hasNext()) {
+                CartInfo next = it.next();
+                if (next.getIsChecked() == 0) {
+                    it.remove();
+                }
             }
         }
-
         return cartInfos;
     }
 
     @RequestMapping("addCart")
-    void addCart(@RequestBody CartInfo cartInfo,HttpServletRequest request){
+    void addCart(@RequestBody CartInfo cartInfo, HttpServletRequest request) {
 
         String userId = "";
         //获取网关验证获得的userId
         userId = request.getHeader("userTempId");
         //如果真正的userId有值，就覆盖
-        if(StringUtils.isNotBlank(request.getHeader("userId"))){
+        if (StringUtils.isNotBlank(request.getHeader("userId"))) {
             userId = request.getHeader("userId");
         }
         //封装sku信息
@@ -72,7 +72,7 @@ public class CartApiController {
     }
 
     @RequestMapping("cartTest")
-    public String cartTest(HttpServletRequest request){
+    public String cartTest(HttpServletRequest request) {
 
         String userId = request.getHeader("userId");
 
@@ -83,13 +83,13 @@ public class CartApiController {
     //cartList  http://api.gmall.com/api/cart/cartList
     //查询购物车列表
     @RequestMapping("cartList")
-    public Result cartList(HttpServletRequest request){
+    public Result cartList(HttpServletRequest request) {
         String userId = "";
         //获取网关验证获得的userId
         //首先获取临时userId,
         userId = request.getHeader("userTempId");
         //如果真正的userId有值，就覆盖
-        if(StringUtils.isNotBlank(request.getHeader("userId"))){
+        if (StringUtils.isNotBlank(request.getHeader("userId"))) {
             userId = request.getHeader("userId");
         }
 
@@ -98,15 +98,16 @@ public class CartApiController {
 
         return Result.ok(cartInfos);
     }
+
     //购物车选中
     @RequestMapping("checkCart/{skuId}/{isChecked}")
-    public void cartList(@PathVariable("skuId") Long skuId,@PathVariable("isChecked") Integer ischecked,HttpServletRequest request){
+    public void cartList(@PathVariable("skuId") Long skuId, @PathVariable("isChecked") Integer ischecked, HttpServletRequest request) {
         String userId = "";
         //获取网关验证获得的userId
         //首先获取临时userId,
         userId = request.getHeader("userTempId");
         //如果真正的userId有值，就覆盖
-        if(StringUtils.isNotBlank(request.getHeader("userId"))){
+        if (StringUtils.isNotBlank(request.getHeader("userId"))) {
             userId = request.getHeader("userId");
         }
         CartInfo cartInfo = new CartInfo();
@@ -114,5 +115,19 @@ public class CartApiController {
         cartInfo.setSkuId(skuId);
         cartInfo.setUserId(userId);
         cartInfoService.checkCart(cartInfo);
+    }
+
+    @RequestMapping("inner/getCartCheckedList/{userId}")
+    List<CartInfo> getCartCheckedList(@PathVariable("userId") String userId) {
+
+        List<CartInfo> cartInfoList = cartInfoService.getCartCheckedList(userId);
+
+        return cartInfoList;
+    }
+
+    //移除购物车选中
+    @RequestMapping("/inner/removeCartCheckedList/{userId}")
+    void removeCartCheckedList(@PathVariable("userId") String userId) {
+        cartInfoService.removeCartCheckedList(userId);
     }
 }

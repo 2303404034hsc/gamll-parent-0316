@@ -83,14 +83,10 @@ public class AuthGlobalFilter implements GlobalFilter {
         //
         if (auth) {
             //判断用户有没有登录
-            if(!StringUtils.isEmpty(userId)){
-                //登录了 让它过去
-                return chain.filter(exchange);
-            }else{
-                //返回错误信息
+            if(StringUtils.isEmpty(userId)){
+                //没登录 报错
                 return out(response, ResultCodeEnum.PERMISSION);
             }
-
         }
 
         //白名单鉴权

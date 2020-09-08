@@ -116,4 +116,22 @@ public class CartInfoServiceImpl implements CartInfoService {
         //同步缓存
         syncCartCache(cartInfo.getUserId());
     }
+
+    @Override
+    public List<CartInfo> getCartCheckedList(String userId) {
+
+        QueryWrapper<CartInfo> cartInfoWrapper = new QueryWrapper<>();
+        cartInfoWrapper.eq("user_id",userId);
+        List<CartInfo> cartInfos = cartInfoMapper.selectList(cartInfoWrapper);
+
+        return cartInfos;
+    }
+
+    @Override
+    public void removeCartCheckedList(String userId) {
+        QueryWrapper<CartInfo> cartInfoWrapper = new QueryWrapper<>();
+        cartInfoWrapper.eq("user_id",userId);
+        cartInfoWrapper.eq("is_checked",1);
+        cartInfoMapper.delete(cartInfoWrapper);
+    }
 }

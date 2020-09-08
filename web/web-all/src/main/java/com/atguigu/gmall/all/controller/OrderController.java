@@ -4,6 +4,7 @@ import com.atguigu.gmall.cart.client.CartFeignClient;
 import com.atguigu.gmall.model.cart.CartInfo;
 import com.atguigu.gmall.model.order.OrderDetail;
 import com.atguigu.gmall.model.user.UserAddress;
+import com.atguigu.gmall.order.client.OrderFeignClient;
 import com.atguigu.gmall.user.client.UserFeignClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -27,6 +28,9 @@ public class OrderController {
 
     @Autowired
     UserFeignClient userFeignClient;
+
+    @Autowired
+    OrderFeignClient orderFeignClient;
 
     @RequestMapping("trade.html")
     public String trade(HttpServletRequest request, Model model) {
@@ -56,6 +60,7 @@ public class OrderController {
         model.addAttribute("detailArrayList",orderDetails);
         model.addAttribute("userAddressList",userAddressList);
         model.addAttribute("totalAmount",getTotalAmount(cartInfos));
+        model.addAttribute("tradeNo",orderFeignClient.getTradeNo(userId));
         return "order/trade";
     }
     //获取页面总金额

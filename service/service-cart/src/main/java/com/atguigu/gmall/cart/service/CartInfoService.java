@@ -14,4 +14,8 @@ public interface CartInfoService {
     List<CartInfo> cartList(String userId);
 
     void checkCart(CartInfo cartInfo);
+
+    List<CartInfo> getCartCheckedList(String userId);
+
+    void removeCartCheckedList(String userId);
 }

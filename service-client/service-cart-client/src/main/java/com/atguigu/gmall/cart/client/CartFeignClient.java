@@ -23,4 +23,10 @@ public interface CartFeignClient {
 
     @RequestMapping("api/cart/inner/getCartListCheckedByUserId/{userId}")
     List<CartInfo> getCartListCheckedByUserId(@PathVariable("userId") String userId);
+
+    @RequestMapping("api/cart/inner/getCartCheckedList/{userId}")
+    List<CartInfo> getCartCheckedList(@PathVariable("userId") String userId);
+
+    @RequestMapping("api/cart/inner/removeCartCheckedList/{userId}")
+    void removeCartCheckedList(@PathVariable("userId") String userId);
 }
