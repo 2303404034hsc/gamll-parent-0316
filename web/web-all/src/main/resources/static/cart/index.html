@@ -420,7 +420,6 @@
             },
 
             deleteCart(skuId) {
-                // debugger
                 cart.deleteCart(skuId).then(response => {
                     console.log('刪除成功')
                     this.init()
@@ -428,7 +427,6 @@
             },
 
             trade() {
-                debugger
                 if(!auth.isLogin()) {
                     window.location.href = 'http://www.gmall.com/login.html?originUrl='+window.location.href
                     return

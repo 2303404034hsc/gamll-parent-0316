@@ -27,4 +27,12 @@ public class PaymentController {
         model.addAttribute("orderInfo",orderInfo);
         return "payment/pay.html";
     }
+
+    //回调成功页面
+    //success
+    @RequestMapping("success")
+    public String success(String orderId, Model model){
+
+        return "payment/success.html";
+    }
 }

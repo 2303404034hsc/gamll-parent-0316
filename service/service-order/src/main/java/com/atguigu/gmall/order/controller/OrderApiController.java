@@ -100,23 +100,29 @@ public class OrderApiController {
             orderInfo.setOutTradeNo(outTradeNo);//"atguigu"+毫秒时间戳+时间格式化字符串
             List<OrderDetail> orderDetails = new ArrayList<>();
             for (CartInfo cartInfo : cartCheckedList) {
+
                 OrderDetail orderDetail = new OrderDetail();
                 BeanUtils.copyProperties(cartInfo, orderDetail);
                 orderDetail.setOrderPrice(cartInfo.getCartPrice());
-
+//                cartInfo.setSkuPrice(orderDetail.getOrderPrice());
+                // TODO 这里有bug 购物车价格和sku_price冲突
                 // 校验此时的真实价格(调用product系统)
-                BigDecimal price = productFeignClient.getSkuPrice(cartInfo.getSkuId() + "");
-                int iPrice = price.compareTo(cartInfo.getSkuPrice());
-                if(iPrice != 0){
-                    return Result.fail();
-                }
+//                BigDecimal price = productFeignClient.getSkuPrice(cartInfo.getSkuId() + "");
+//                if(null != price){
+//                    int iPrice = price.compareTo(cartInfo.getSkuPrice());
+//                    if(iPrice != 0){
+//                        return Result.fail();
+//                    }
+//                }
                 // 校验此时的真实库存(调用库存系统系统),webservice
                 // http工具类
-                String hasStock = HttpClientUtil.doGet("http://localhost:9001/hasStock?skuId=10221&num=2");
-                int iStock = new BigDecimal(hasStock).compareTo(new BigDecimal("0"));
-                if(iStock != 0){
-                    return Result.fail();
-                }
+//                String hasStock = HttpClientUtil.doGet("http://localhost:9001/hasStock?skuId=10221&num=2");
+//                if(null != hasStock){
+//                    int iStock = new BigDecimal(hasStock).compareTo(new BigDecimal("0"));
+//                    if(iStock != 0){
+//                        return Result.fail();
+//                    }
+//                }
                 orderDetails.add(orderDetail);
             }
             orderInfo.setOrderDetailList(orderDetails);// 封装订单详情

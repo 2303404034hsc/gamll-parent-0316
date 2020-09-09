@@ -133,5 +133,8 @@ public class CartInfoServiceImpl implements CartInfoService {
         cartInfoWrapper.eq("user_id",userId);
         cartInfoWrapper.eq("is_checked",1);
         cartInfoMapper.delete(cartInfoWrapper);
+
+        //同步缓存
+        syncCartCache(userId);
     }
 }

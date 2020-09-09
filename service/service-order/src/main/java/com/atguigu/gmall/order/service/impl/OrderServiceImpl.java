@@ -5,6 +5,7 @@ import com.atguigu.gmall.model.order.OrderInfo;
 import com.atguigu.gmall.order.mapper.OrderDetailMapper;
 import com.atguigu.gmall.order.mapper.OrderInfoMapper;
 import com.atguigu.gmall.order.service.OrderService;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -64,6 +65,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderInfo getOrderInfoById(String orderId) {
-        return orderInfoMapper.selectById(orderId);
+        //封装订单和订单详情
+        OrderInfo orderInfo = orderInfoMapper.selectById(orderId);
+        QueryWrapper<OrderDetail> orderDetailWrapper = new QueryWrapper<>();
+        orderDetailWrapper.eq("order_id",orderId);
+        List<OrderDetail> orderDetails = orderDetailMapper.selectList(orderDetailWrapper);
+        orderInfo.setOrderDetailList(orderDetails);
+        return orderInfo;
     }
 }
