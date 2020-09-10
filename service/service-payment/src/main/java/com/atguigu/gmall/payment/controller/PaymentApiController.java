@@ -29,13 +29,13 @@ import java.util.Date;
 @RequestMapping("api/payment")
 public class PaymentApiController {
 
-
     @Autowired
     AlipayService alipayService;
 
     @Autowired
     OrderFeignClient orderFeignClient;
 
+    //@RequestMapping("api/payment/alipay/callback/return")
     @RequestMapping("alipay/callback/return")
     public void  alipayCallback(HttpServletRequest request, HttpServletResponse response){
 
@@ -100,6 +100,7 @@ public class PaymentApiController {
         paymentInfo.setOrderId(Long.parseLong(orderId));
         paymentInfo.setPaymentType(PaymentType.ALIPAY.getComment());
         paymentInfo.setTotalAmount(orderInfo.getTotalAmount());
+
         alipayService.save(paymentInfo);
 
         return form;

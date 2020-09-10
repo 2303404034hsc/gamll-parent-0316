@@ -89,7 +89,7 @@ public class CartInfoServiceImpl implements CartInfoService {
         cartInfoWrapper.eq("user_id",userId);
         cartInfos = cartInfoMapper.selectList(cartInfoWrapper);
 
-        if(null != cartInfos||cartInfos.size()>0){
+        if(null != cartInfos&&cartInfos.size()>0){
             //同步缓存
             Map<String,Object> map = new HashMap<>();
             for (CartInfo cartInfo : cartInfos) {
@@ -98,7 +98,14 @@ public class CartInfoServiceImpl implements CartInfoService {
                 cartInfo.setSkuPrice(skuPrice);
                 map.put(cartInfo.getSkuId()+"",cartInfo);
             }
+            //先删除再添加
+            redisTemplate.delete("user:"+userId+":cart");
             redisTemplate.boundHashOps("user:"+userId+":cart").putAll(map);
+        }
+        //如果数据库中查不到了 删除这个key
+        if(cartInfos.size() == 0 ){
+            //删除key
+            redisTemplate.delete("user:"+userId+":cart");
         }
         return cartInfos;
     }
@@ -115,6 +122,8 @@ public class CartInfoServiceImpl implements CartInfoService {
 
         //同步缓存
         syncCartCache(cartInfo.getUserId());
+
+
     }
 
     @Override
@@ -122,6 +131,7 @@ public class CartInfoServiceImpl implements CartInfoService {
 
         QueryWrapper<CartInfo> cartInfoWrapper = new QueryWrapper<>();
         cartInfoWrapper.eq("user_id",userId);
+        cartInfoWrapper.eq("is_checked",1);
         List<CartInfo> cartInfos = cartInfoMapper.selectList(cartInfoWrapper);
 
         return cartInfos;
@@ -129,12 +139,13 @@ public class CartInfoServiceImpl implements CartInfoService {
 
     @Override
     public void removeCartCheckedList(String userId) {
+
         QueryWrapper<CartInfo> cartInfoWrapper = new QueryWrapper<>();
         cartInfoWrapper.eq("user_id",userId);
         cartInfoWrapper.eq("is_checked",1);
         cartInfoMapper.delete(cartInfoWrapper);
 
-        //同步缓存
+
         syncCartCache(userId);
     }
 }

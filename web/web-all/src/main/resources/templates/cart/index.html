@@ -371,7 +371,6 @@
         methods: {
             init() {
                 cart.cartList().then(response => {
-                     debugger
                     this.data = response.data.data
 
                     this.compute()
@@ -381,7 +380,6 @@
             // 计算
             compute() {
                 if(this.data == null) return
-                // debugger
                 this.count = 0
                 for(var i=0; i<this.data.length; i++) {
                     this.total += this.data[i].skuPrice * this.data[i].skuNum
